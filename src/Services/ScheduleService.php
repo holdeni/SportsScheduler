@@ -30,6 +30,9 @@ class ScheduleService
     /** @var null|int */
     protected $gameLengthInMins = null;
 
+    /** @var int */
+    protected $maxWeeksToSchedule;
+
     public function __construct(
         DefaultScheduleRepository $defaultScheduleRepository,
         GameLocationRepository $gameLocationRepository,
@@ -50,14 +53,14 @@ class ScheduleService
         $this->gameLengthInMins = $gameLengthInMins;
 
         /**
-         * @todo Figure out how weeks in schedule by determining size of each division and number of games for division in default schedule
+         * Figure out how weeks in schedule by determining size of each division and number of games for division in default schedule
          */
-
-        $this->createTimeSlots();
+        $this->reviewScheduleRequirements();
 
         /**
          * @todo Using default schedule, build the set of games that need to be scheduled into Games_To_Schedule table
          */
+        $this->createTimeSlots();
 
         /**
          * @todo Start processing games to be scheduled and fit them into the schedule
@@ -74,4 +77,19 @@ class ScheduleService
          */
     }
 
+    private function reviewScheduleRequirements()
+    {
+        $this->maxWeeksToSchedule = 0;
+
+        $divTeamInfo = $this->teamInformationRepo->getNrOfTeamsInDiv();
+        foreach ($divTeamInfo as $key => $divisionInfo) {
+            $weeksInSchedule = $this->defaultScheduleRepo->getScheduleLengthInWeeks($divisionInfo['NrTeamsInDiv']);
+            if ($weeksInSchedule == 0) {
+                die("ERROR: Unable to find default schedule for division " . $divisionInfo['teamDivision'] . " containing " . $divisionInfo['NrTeamsInDiv'] . " teams\n");
+            }
+            $this->maxWeeksToSchedule = max($weeksInSchedule, $this->maxWeeksToSchedule);
+        }
+
+        echo "-- we need to build a schedule covering " . $this->maxWeeksToSchedule . " weeks\n";
+    }
 }

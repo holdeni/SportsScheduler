@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\DefaultSchedule;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 class DefaultScheduleRepository extends ServiceEntityRepository
@@ -16,20 +17,32 @@ class DefaultScheduleRepository extends ServiceEntityRepository
     public function save(DefaultSchedule $entity)
     {
         $em = $this->getEntityManager();
+        /** @noinspection PhpUnhandledExceptionInspection */
         $em->persist($entity);
+        /** @noinspection PhpUnhandledExceptionInspection */
         $em->flush();
     }
 
-    /*
-    public function findBySomething($value)
+    /**
+     * Get the length, in weeks, of a schedule, for a given division size
+     *
+     * @param int $divisionFormat
+     *
+     * @return int
+     */
+    public function getScheduleLengthInWeeks(int $divisionFormat)
     {
-        return $this->createQueryBuilder('d')
-            ->where('d.something = :value')->setParameter('value', $value)
-            ->orderBy('d.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        $em = $this->getEntityManager();
+        $sql = "SELECT COUNT(DISTINCT ds.weekNr) AS WeeksInSchedule
+                FROM App:DefaultSchedule ds
+                WHERE ds.divisionFormat = :divisionFormat
+               ";
+        $dbData = $em->createQuery($sql)
+            ->setParameters(array(
+                'divisionFormat' => $divisionFormat,
+            ))
+            ->getResult(Query::HYDRATE_SINGLE_SCALAR);
+
+        return($dbData);
     }
-    */
 }

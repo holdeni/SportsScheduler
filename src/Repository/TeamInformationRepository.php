@@ -17,20 +17,28 @@ class TeamInformationRepository extends ServiceEntityRepository
     public function save(TeamInformation $entity)
     {
         $em = $this->getEntityManager();
+        /** @noinspection PhpUnhandledExceptionInspection */
         $em->persist($entity);
+        /** @noinspection PhpUnhandledExceptionInspection */
         $em->flush();
     }
 
-    /*
-    public function findBySomething($value)
+    /**
+     * Get the count of teams in divisions
+     *
+     * @return array
+     */
+    public function getNrOfTeamsInDiv()
     {
-        return $this->createQueryBuilder('d')
-            ->where('d.something = :value')->setParameter('value', $value)
-            ->orderBy('d.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        $em = $this->getEntityManager();
+        $sql = "SELECT ti.teamDivision, COUNT(ti.teamDivision) as NrTeamsInDiv
+                FROM App:TeamInformation ti
+                GROUP BY ti.teamDivision
+               ";
+        $dbData = $em->createQuery($sql)
+            ->getArrayResult();
+
+        return($dbData);
     }
-    */
+
 }
