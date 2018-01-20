@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\GameLocation;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 class GameLocationRepository extends ServiceEntityRepository
@@ -17,20 +18,29 @@ class GameLocationRepository extends ServiceEntityRepository
     public function save(GameLocation $entity)
     {
         $em = $this->getEntityManager();
+
         $em->persist($entity);
         $em->flush();
     }
 
-    /*
-    public function findBySomething($value)
+    /**
+     * @param string $dayOfWeek
+     *
+     * @return GameLocation[] | null
+     */
+    public function fetchGamesSlatedForDayOfWeek(string $dayOfWeek)
     {
-        return $this->createQueryBuilder('d')
-            ->where('d.something = :value')->setParameter('value', $value)
-            ->orderBy('d.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        $em = $this->getEntityManager();
+        $sql = "SELECT gl
+                FROM App:GameLocation gl
+                WHERE gl.dayOfWeek = :dayOfWeek
+               ";
+        $dbData = $em->createQuery($sql)
+            ->setParameters(array(
+                'dayOfWeek' => $dayOfWeek,
+            ))
+            ->getResult();
+
+        return($dbData);
     }
-    */
 }

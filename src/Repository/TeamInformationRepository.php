@@ -17,9 +17,7 @@ class TeamInformationRepository extends ServiceEntityRepository
     public function save(TeamInformation $entity)
     {
         $em = $this->getEntityManager();
-        /** @noinspection PhpUnhandledExceptionInspection */
         $em->persist($entity);
-        /** @noinspection PhpUnhandledExceptionInspection */
         $em->flush();
     }
 

@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Services\ScheduleService;
+use App\Service\ScheduleService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -78,7 +78,7 @@ class AppScheduleGenerateCommand extends Command
                     }
 
                     $this->io->text("... using as start date: " . $argumentValue);
-                    $this->scheduleStartDate = new \DateTime($argumentValue);
+                    $this->scheduleStartDate = $argumentValue;
 
                     break;
 
@@ -93,6 +93,8 @@ class AppScheduleGenerateCommand extends Command
                         );
                         die();
                     }
+                    $this->io->text("... using as game length: " . $argumentValue);
+                    $this->gameLengthInMins = $argumentValue;
 
                     break;
             }

@@ -8,7 +8,9 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(
  *     name="Team_Information",
  * )
- * @ORM\Entity(repositoryClass="App\Repository\TeamInformationRepository")
+ * @ORM\Entity(
+ *     repositoryClass="App\Repository\TeamInformationRepository"
+ * )
  */
 class TeamInformation
 {

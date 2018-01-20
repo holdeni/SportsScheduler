@@ -17,9 +17,7 @@ class DefaultScheduleRepository extends ServiceEntityRepository
     public function save(DefaultSchedule $entity)
     {
         $em = $this->getEntityManager();
-        /** @noinspection PhpUnhandledExceptionInspection */
         $em->persist($entity);
-        /** @noinspection PhpUnhandledExceptionInspection */
         $em->flush();
     }
 
