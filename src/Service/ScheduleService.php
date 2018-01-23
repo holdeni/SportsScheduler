@@ -3,6 +3,7 @@
 namespace App\Service;
 
 
+use App\Entity\GameLocation;
 use App\Entity\ScheduledGame;
 use App\Repository\DefaultScheduleRepository;
 use App\Repository\GameLocationRepository;
@@ -108,34 +109,7 @@ class ScheduleService
                         $this->dateUtilityService->getDayOfWeekText($dayOfWeekValue)
                     );
                 if (!empty($dbData)) {
-                    $this->logger->debug("DBDATA:\n" . print_r($dbData, true));
-                    foreach ($dbData as $row) {
-                        $availableTime = $row->getEndAvailable()->diff($row->getStartAvailable());
-                        $availableMins =
-                            (int) $availableTime->format('%h') * 60 +
-                            (int) $availableTime->format('%i');
-                        $availableSlots = floor($availableMins / $this->gameLengthInMins);
-                        $this->logger->debug("Start:\n" . print_r($row->getStartAvailable(), true));
-                        $this->logger->debug("End:\n" . print_r($row->getEndAvailable(), true));
-
-                        $this->logger->debug("Available time:\n" . print_r($availableTime, true));
-                        $this->logger->debug("Available minutes: " . $availableMins);
-                        $this->logger->debug("Number of slots available:\n" . print_r($availableSlots, true));
-
-                        $timeToSchedule = $row->getStartAvailable();
-//                        $gameInterval = new \DateInterval("T" . $this->gameLengthInMins . "M");
-                        $gameInterval = new \DateInterval("PT" . $this->gameLengthInMins . "M");
-                        for ($slots = 1; $slots <= $availableSlots; $slots++) {
-                            $scheduledGame = new ScheduledGame();
-                            $scheduledGame
-                                ->setGameDate($dateToSchedule)
-                                ->setGameTime($timeToSchedule)
-                                ->setGameLocation($row->getGameLocationName());
-                            $this->scheduledGameRepo->save($scheduledGame);
-                            $timeToSchedule->add($gameInterval);
-                            unset($scheduledGame);
-                        }
-                    }
+                    $this->processTimeslotsForWeek($dbData, $dateToSchedule);
                     echo "    Schedule date: " . $dateToSchedule->format("l, Y-m-d") . "\n";
                 }
 
@@ -164,5 +138,39 @@ class ScheduleService
         }
 
         echo "-- we need to build a schedule covering " . $this->maxWeeksToSchedule . " weeks\n";
+    }
+
+    /**
+     * @param GameLocation[] $dbData
+     * @param \DateTime $dateToSchedule
+     */
+    private function processTimeslotsForWeek(array $dbData, \DateTime $dateToSchedule): void
+    {
+        $gameInterval = new \DateInterval("PT" . $this->gameLengthInMins . "M");
+
+        foreach ($dbData as $row) {
+            $availableTime = $row->getEndAvailable()->diff($row->getStartAvailable());
+            $availableMins =
+                (int) $availableTime->format('%h') * 60 +
+                (int) $availableTime->format('%i');
+            $availableSlots = floor($availableMins / $this->gameLengthInMins);
+            $this->logger->debug("Available minutes: " . $availableMins);
+            $this->logger->debug("Number of slots available:\n" . print_r($availableSlots, true));
+
+            // Had to create a new object otherwise if I assigned the data from $row directly, I had a weird bug where
+            // 2nd and subsequent weeks wouldn't work as the start time for the records in $dbData was always 23:00
+            // so no intervals existed.
+            $timeToSchedule = new \DateTime($row->getStartAvailable()->format("H:i:s"));
+            for ($slots = 1; $slots <= $availableSlots; $slots++) {
+                $scheduledGame = new ScheduledGame();
+                $scheduledGame
+                    ->setGameDate($dateToSchedule)
+                    ->setGameTime($timeToSchedule)
+                    ->setGameLocation($row->getGameLocationName());
+                $this->scheduledGameRepo->save($scheduledGame);
+                $timeToSchedule->add($gameInterval);
+                unset($scheduledGame);
+            }
+        }
     }
 }
