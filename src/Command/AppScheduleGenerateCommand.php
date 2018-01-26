@@ -25,6 +25,16 @@ class AppScheduleGenerateCommand extends Command
     /** @var ScheduleService */
     protected $scheduleService;
 
+    /** @var array */
+    protected $flowControl = array(
+        'generateGamesToSchedule' => false,
+    );
+
+    /**
+     * AppScheduleGenerateCommand constructor.
+     *
+     * @param ScheduleService $scheduleService
+     */
     public function __construct(ScheduleService $scheduleService)
     {
         $this->scheduleService = $scheduleService;
@@ -32,6 +42,9 @@ class AppScheduleGenerateCommand extends Command
         parent::__construct();
     }
 
+    /**
+     *
+     */
     protected function configure()
     {
         $this
@@ -48,24 +61,40 @@ class AppScheduleGenerateCommand extends Command
                 InputOption::VALUE_REQUIRED,
                 'Time, in minutes, each game is alloted'
             )
+            ->addOption(
+                'genGamesToSched',
+                null,
+                InputOption::VALUE_NONE,
+                'Prepare list of games to schedule and an empty schedule with timeslots'
+            )
         ;
     }
 
+    /**
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @return int|null|void
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->io = new SymfonyStyle($input, $output);
-        $arguments['startDate']   = $input->getOption('startDate');
-        $arguments['gameLength'] = $input->getOption('gameLength');
 
-        $this->validateArguments($arguments);
+        $this->validateArguments($input->getOptions());
         $this->scheduleService->generateSchedule(
             $this->scheduleStartDate,
-            $this->gameLengthInMins
+            $this->gameLengthInMins,
+            $this->flowControl
         );
 
         $this->io->success("... a schedule has been successfully generated");
     }
 
+    /**
+     * @param $arguments
+     */
     private function validateArguments($arguments)
     {
         foreach ($arguments as $argumentKey => $argumentValue) {
@@ -97,6 +126,14 @@ class AppScheduleGenerateCommand extends Command
                     $this->gameLengthInMins = $argumentValue;
 
                     break;
+
+                case 'genGamesToSched':
+                    if (!empty($argumentValue)) {
+                        $this->flowControl['generateGamesToSchedule'] = true;
+                        $this->io->text("... will generate games to schedule for divisions in league");
+                    }
+
+                    break;
             }
         }
 
@@ -104,6 +141,5 @@ class AppScheduleGenerateCommand extends Command
             $this->io->error("Command is missing required values to operating. Exiting");
             die();
         }
-
     }
 }

@@ -43,4 +43,25 @@ class DefaultScheduleRepository extends ServiceEntityRepository
 
         return($dbData);
     }
+
+    /**
+     * @param int $divisionFormat
+     *
+     * @return DefaultSchedule[]
+     */
+    public function getDefaultSchedule(int $divisionFormat)
+    {
+        $em = $this->getEntityManager();
+        $sql = "SELECT ds
+                FROM App:DefaultSchedule ds
+                WHERE ds.divisionFormat = :divisionFormat
+                ";
+        $dbData = $em->createQuery($sql)
+            ->setParameters(array(
+                'divisionFormat' => $divisionFormat,
+            ))
+            ->getResult(Query::HYDRATE_OBJECT);
+
+        return $dbData;
+    }
 }

@@ -4,9 +4,11 @@ namespace App\Service;
 
 
 use App\Entity\GameLocation;
+use App\Entity\GameToSchedule;
 use App\Entity\ScheduledGame;
 use App\Repository\DefaultScheduleRepository;
 use App\Repository\GameLocationRepository;
+use App\Repository\GameToScheduleRepository;
 use App\Repository\ScheduledGameRepository;
 use App\Repository\TeamInformationRepository;
 
@@ -26,6 +28,9 @@ class ScheduleService
     /** @var ScheduledGameRepository */
     protected $scheduledGameRepo;
 
+    /** @var GameToScheduleRepository */
+    protected $gameToScheduleRepo;
+
     /** @var DateUtilityService */
     protected $dateUtilityService;
 
@@ -41,11 +46,16 @@ class ScheduleService
     /** @var int */
     protected $maxWeeksToSchedule;
 
+    protected $flowControl = array(
+        'generateGamesToSchedule' => false,
+    );
+
     public function __construct(
         DefaultScheduleRepository $defaultScheduleRepository,
         GameLocationRepository $gameLocationRepository,
         TeamInformationRepository $teamInformationRepository,
         ScheduledGameRepository $scheduledGameRepository,
+        GameToScheduleRepository $gameToScheduleRepository,
         DateUtilityService $dateUtilityService,
         LoggerInterface $logger
     )
@@ -54,39 +64,119 @@ class ScheduleService
         $this->gameLocationRepo = $gameLocationRepository;
         $this->teamInformationRepo = $teamInformationRepository;
         $this->scheduledGameRepo = $scheduledGameRepository;
+        $this->gameToScheduleRepo = $gameToScheduleRepository;
         $this->dateUtilityService = $dateUtilityService;
         $this->logger = $logger;
     }
 
+    /**
+     * @param string $scheduleStartDate
+     * @param int    $gameLengthInMins
+     * @param array  $flowControl
+     *
+     * @return bool
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     public function generateSchedule(
         string $scheduleStartDate,
-        int $gameLengthInMins
+        int $gameLengthInMins,
+        array $flowControl
     ) {
 
         $this->scheduleStartDate = $scheduleStartDate;
         $this->gameLengthInMins = $gameLengthInMins;
+        $this->flowControl = $flowControl;
 
-        /**
-         * Figure out how weeks in schedule by determining size of each division and number of games for division in default schedule
-         */
-        $this->reviewScheduleRequirements();
+        if ($this->flowControl['generateGamesToSchedule']) {
+            // Get rid of the current schedule details
+            $this->truncateScheduleTables();
 
-        /**
-         * @todo Using default schedule, build the set of games that need to be scheduled into Games_To_Schedule table
-         */
-        $this->createTimeSlots();
+            /**
+             * Determine division sizes involved and max weeks we need to schedule while preparing table with all
+             * the games we will schedule
+             */
+            $this->determineGamesToSchedule();
+
+            /**
+             * Using default game location information, build the set of game slots that can be used
+             */
+             $this->createTimeSlots();
+        }
 
         /**
          * @todo Start processing games to be scheduled and fit them into the schedule
+         *       1. Randomly or in a set sequence, pick a division
+         *       2. For each game in that division
+         *          - create list of acceptable dates to schedule the game on
+         *              . avoid n games in a row on same night*
+         *              . avoid n games in a row at the same time*
+         *              . maintain 40% usage of both diamonds
+         *          - randomly pick on of the acceptable dates
+         *          - copy game details into Scheduled_Game table
+         *          - delete game details from Game_To_Schedule
+         *
+         *       * denotes value may be set by team or set to ignore for team
+         * @todo When team schedule preferences defined, do scheduling in reverse order of complexity
          */
 
         return true;
     }
 
+    private function truncateScheduleTables()
+    {
+        echo "--- deleting any existing scheduling details\n";
+        $this->gameToScheduleRepo->truncate();
+        $this->scheduledGameRepo->truncate();
+    }
+
+    /**
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    private function determineGamesToSchedule()
+    {
+        $this->maxWeeksToSchedule = 0;
+
+        $divTeamInfo = $this->teamInformationRepo->getNrOfTeamsInDiv();
+        foreach ($divTeamInfo as $key => $divisionInfo) {
+            $weeksInSchedule = $this->defaultScheduleRepo->getScheduleLengthInWeeks($divisionInfo['NrTeamsInDiv']);
+            if ($weeksInSchedule == 0) {
+                die("ERROR: Unable to find default schedule for division " . $divisionInfo['teamDivision'] . " containing " . $divisionInfo['NrTeamsInDiv'] . " teams\n");
+            }
+            $this->maxWeeksToSchedule = max($weeksInSchedule, $this->maxWeeksToSchedule);
+
+            echo "--- prepare Division " . $divisionInfo['teamDivision'] . " schedule details\n";
+            $defaultScheduleInfo = $this->defaultScheduleRepo->getDefaultSchedule($divisionInfo['NrTeamsInDiv']);
+            foreach ($defaultScheduleInfo as $divisionSchedule) {
+                $gameToSchedule = new GameToSchedule();
+                $visitTeamId = $this->teamInformationRepo->mapTeamDivIdToTeamId(
+                    $divisionSchedule->getVisitTeamId(),
+                    $divisionInfo['teamDivision']
+                );
+                $homeTeamId = $this->teamInformationRepo->mapTeamDivIdToTeamId(
+                    $divisionSchedule->getHomeTeamId(),
+                    $divisionInfo['teamDivision']
+                );
+                $gameToSchedule
+                    ->setWeekNr($divisionSchedule->getWeekNr())
+                    ->setVisitTeamId($visitTeamId)
+                    ->setHomeTeamId($homeTeamId);
+                $this->gameToScheduleRepo->save($gameToSchedule);
+                unset($gameToSchedule);
+            }
+        }
+
+        echo "--- Need to build a schedule covering " . $this->maxWeeksToSchedule . " weeks\n";
+    }
+
+    /**
+     *
+     */
     private function createTimeSlots()
     {
         /**
-         * @todo Create time slots using game information and save to Generated_Schedule table in DB for nr of weeks in schedule
+         * Create time slots using game information and save to Generated_Schedule table in DB for nr of weeks in schedule
          */
         // For now, we assume our first week is a full week so we don't have any partial week of timeslots to create
         // For now, we assume we start on Mon
@@ -122,22 +212,6 @@ class ScheduleService
             unset($daysToShift);
             unset($dateToSchedule);
         }
-    }
-
-    private function reviewScheduleRequirements()
-    {
-        $this->maxWeeksToSchedule = 0;
-
-        $divTeamInfo = $this->teamInformationRepo->getNrOfTeamsInDiv();
-        foreach ($divTeamInfo as $key => $divisionInfo) {
-            $weeksInSchedule = $this->defaultScheduleRepo->getScheduleLengthInWeeks($divisionInfo['NrTeamsInDiv']);
-            if ($weeksInSchedule == 0) {
-                die("ERROR: Unable to find default schedule for division " . $divisionInfo['teamDivision'] . " containing " . $divisionInfo['NrTeamsInDiv'] . " teams\n");
-            }
-            $this->maxWeeksToSchedule = max($weeksInSchedule, $this->maxWeeksToSchedule);
-        }
-
-        echo "-- we need to build a schedule covering " . $this->maxWeeksToSchedule . " weeks\n";
     }
 
     /**

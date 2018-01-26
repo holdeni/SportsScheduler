@@ -127,7 +127,7 @@ class ScheduledGame
      *     nullable=true,
      *     options={
      *         "unsigned"=true,
-     *         "deafult"=null
+     *         "default"=null
      *     }
      * )
      */
