@@ -8,13 +8,28 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
+/**
+ * Class TeamInformationRepository
+ * @package App\Repository
+ */
 class TeamInformationRepository extends ServiceEntityRepository
 {
+    /**
+     * TeamInformationRepository constructor.
+     *
+     * @param RegistryInterface $registry
+     */
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, TeamInformation::class);
     }
 
+    /**
+     * @param TeamInformation $entity
+     *
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     public function save(TeamInformation $entity)
     {
         $em = $this->getEntityManager();
@@ -37,7 +52,7 @@ class TeamInformationRepository extends ServiceEntityRepository
             ->createQuery($sql)
             ->getArrayResult();
 
-        return($dbData);
+        return $dbData;
     }
 
     /**
@@ -62,5 +77,25 @@ class TeamInformationRepository extends ServiceEntityRepository
             ->getResult(Query::HYDRATE_SINGLE_SCALAR);
 
         return $dbData;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getListOfTeamDivisions()
+    {
+        $sql = "SELECT DISTINCT(ti.teamDivision)
+                FROM App:TeamInformation ti
+                ORDER BY ti.teamDivision
+               ";
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->getArrayResult();
+
+        foreach ($dbData as $row) {
+            $divisionList[] = $row[1];
+        }
+
+        return $divisionList;
     }
 }

@@ -5,8 +5,13 @@ namespace App\Repository;
 use App\Entity\ScheduledGame;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
+/**
+ * Class ScheduledGameRepository
+ * @package App\Repository
+ */
 class ScheduledGameRepository extends ServiceEntityRepository
 {
     /**
@@ -19,6 +24,14 @@ class ScheduledGameRepository extends ServiceEntityRepository
         parent::__construct($registry, ScheduledGame::class);
     }
 
+    /**
+     * Save record to the database
+     *
+     * @param ScheduledGame $entity
+     *
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     public function save(ScheduledGame $entity)
     {
         $em = $this->getEntityManager();
@@ -28,7 +41,7 @@ class ScheduledGameRepository extends ServiceEntityRepository
     }
 
     /**
-     *
+     * Truncate the table
      */
     public function truncate()
     {
@@ -39,5 +52,31 @@ class ScheduledGameRepository extends ServiceEntityRepository
         $dbConn = $this->getEntityManager()->getConnection();
         $dbCmd = $dbConn->prepare($sql);
         $dbCmd->execute();
+    }
+
+    /**
+     * Find records between given set of dates
+     *
+     * @param \DateTime $startDate
+     * @param \DateTime @endDate
+     *
+     * @return ScheduledGame[]
+     */
+    public function findAvailSlots(\DateTime $startDate, \DateTime $endDate)
+    {
+        $sql = "SELECT sg
+                FROM App:ScheduledGame sg
+                WHERE sg.gameDate BETWEEN :startDate AND :endDate
+               ";
+
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->setParameters(array(
+                'startDate' => $startDate->format("Y-m-d"),
+                'endDate' => $endDate->format("Y-m-d"),
+            ))
+            ->getResult(Query::HYDRATE_OBJECT);
+
+        return $dbData;
     }
 }

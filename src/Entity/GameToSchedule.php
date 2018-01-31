@@ -39,6 +39,16 @@ class GameToSchedule
 
     /**
      * @ORM\Column(
+     *     name="Division",
+     *     type="string",
+     *     length=3,
+     *     nullable=false
+     * )
+     */
+    private $division;
+
+    /**
+     * @ORM\Column(
      *     name="Home_Team_Id",
      *     type="integer",
      *     nullable=false,
@@ -102,6 +112,26 @@ class GameToSchedule
     public function setGameToScheduleId(int $gameToScheduleId)
     {
         $this->gameToScheduleId = $gameToScheduleId;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDivision()
+    {
+        return $this->division;
+    }
+
+    /**
+     * @param string $division
+     *
+     * @return GameToSchedule
+     */
+    public function setDivision(string $division)
+    {
+        $this->division = $division;
 
         return $this;
     }
@@ -185,6 +215,4 @@ class GameToSchedule
 
         return $this;
     }
-
-
 }

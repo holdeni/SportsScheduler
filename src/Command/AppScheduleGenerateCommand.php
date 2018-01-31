@@ -9,6 +9,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+/**
+ * Class AppScheduleGenerateCommand
+ * @package App\Command
+ */
 class AppScheduleGenerateCommand extends Command
 {
     protected static $defaultName = 'app:schedule:generate';
@@ -86,7 +90,8 @@ class AppScheduleGenerateCommand extends Command
         $this->scheduleService->generateSchedule(
             $this->scheduleStartDate,
             $this->gameLengthInMins,
-            $this->flowControl
+            $this->flowControl,
+            $this->io
         );
 
         $this->io->success("... a schedule has been successfully generated");
