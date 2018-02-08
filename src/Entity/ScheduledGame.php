@@ -73,7 +73,8 @@ class ScheduledGame
     /**
      * @ORM\Column(
      *     name="Game_Date",
-     *     type="date",
+     *     type="string",
+     *     length=16,
      *     nullable=true,
      *     options={
      *         "default"=null
@@ -111,7 +112,8 @@ class ScheduledGame
     /**
      * @ORM\Column(
      *     name="Game_Time",
-     *     type="time",
+     *     type="string",
+     *     length=16,
      *     nullable=true,
      *     options={
      *         "default"=null
@@ -172,6 +174,12 @@ class ScheduledGame
      */
     private $templateScheduleWeekNumber;
 
+    /** @var string */
+    private $homeTeamName;
+
+    /** @var string */
+    private $visitTeamName;
+
     /**
      * @return int
      */
@@ -217,7 +225,7 @@ class ScheduledGame
      */
     public function getGameDate()
     {
-        return $this->gameDate;
+        return new \DateTime($this->gameDate);
     }
 
     /**
@@ -227,7 +235,7 @@ class ScheduledGame
      */
     public function setGameDate(\DateTime $gameDate)
     {
-        $this->gameDate = $gameDate;
+        $this->gameDate = $gameDate->format("Y-m-d");
 
         return $this;
     }
@@ -277,7 +285,7 @@ class ScheduledGame
      */
     public function getGameTime()
     {
-        return $this->gameTime;
+        return new \DateTime($this->gameTime);
     }
 
     /**
@@ -287,7 +295,7 @@ class ScheduledGame
      */
     public function setGameTime(\DateTime $gameTime)
     {
-        $this->gameTime = $gameTime;
+        $this->gameTime = $gameTime->format("H:i:s");
 
         return $this;
     }
@@ -371,4 +379,46 @@ class ScheduledGame
 
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function getHomeTeamName(): string
+    {
+        return $this->homeTeamName;
+    }
+
+    /**
+     * @param string $homeTeamName
+     *
+     * @return ScheduledGame
+     */
+    public function setHomeTeamName(string $homeTeamName): ScheduledGame
+    {
+        $this->homeTeamName = $homeTeamName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVisitTeamName(): string
+    {
+        return $this->visitTeamName;
+    }
+
+    /**
+     * @param string $visitTeamName
+     *
+     * @return ScheduledGame
+     */
+    public function setVisitTeamName(string $visitTeamName): ScheduledGame
+    {
+        $this->visitTeamName = $visitTeamName;
+
+        return $this;
+    }
+
+
 }

@@ -67,6 +67,7 @@ class ScheduledGameRepository extends ServiceEntityRepository
         $sql = "SELECT sg
                 FROM App:ScheduledGame sg
                 WHERE sg.gameDate BETWEEN :startDate AND :endDate
+                  AND sg.homeTeamId IS NULL
                ";
 
         $dbData = $this->getEntityManager()
@@ -74,6 +75,37 @@ class ScheduledGameRepository extends ServiceEntityRepository
             ->setParameters(array(
                 'startDate' => $startDate->format("Y-m-d"),
                 'endDate' => $endDate->format("Y-m-d"),
+            ))
+            ->getResult(Query::HYDRATE_OBJECT);
+
+        return $dbData;
+    }
+
+    /**
+     * Find past games, in a date range, for a specific team id
+     *
+     * @param int $teamId
+     * @param string $startDate
+     * @param string $endDate
+     *
+     * @return ScheduledGame[]
+     */
+    public function findPastGamesForTeamId(
+        int $teamId,
+        string $startDate,
+        string $endDate
+    ) {
+        $sql = "SELECT sg
+                FROM App:ScheduledGame sg
+                WHERE sg.gameDate BETWEEN :startDate AND :endDate
+                  AND (sg.homeTeamId = :teamId OR sg.visitTeamId = :teamId)
+               ";
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->setParameters(array(
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'teamId' => $teamId
             ))
             ->getResult(Query::HYDRATE_OBJECT);
 

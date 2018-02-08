@@ -23,6 +23,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ScheduleService
 {
+    const MAX_CONSECUTIVE_SAME_DAY = 3;
+    const MAX_CONSECUTIVE_SAME_TIME = 3;
+
     /** @var DefaultScheduleRepository */
     protected $defaultScheduleRepo;
 
@@ -37,6 +40,9 @@ class ScheduleService
 
     /** @var GameToScheduleRepository */
     protected $gameToScheduleRepo;
+
+    /** @var GameToScheduleService */
+    protected $gameToScheduleService;
 
     /** @var DateUtilityService */
     protected $dateUtilityService;
@@ -68,6 +74,7 @@ class ScheduleService
      * @param TeamInformationRepository $teamInformationRepository
      * @param ScheduledGameRepository   $scheduledGameRepository
      * @param GameToScheduleRepository  $gameToScheduleRepository
+     * @param GameToScheduleService     $gameToScheduleService
      * @param DateUtilityService        $dateUtilityService
      * @param LoggerInterface           $logger
      */
@@ -77,6 +84,7 @@ class ScheduleService
         TeamInformationRepository $teamInformationRepository,
         ScheduledGameRepository $scheduledGameRepository,
         GameToScheduleRepository $gameToScheduleRepository,
+        GameToScheduleService $gameToScheduleService,
         DateUtilityService $dateUtilityService,
         LoggerInterface $logger
     )
@@ -86,6 +94,7 @@ class ScheduleService
         $this->teamInformationRepo = $teamInformationRepository;
         $this->scheduledGameRepo = $scheduledGameRepository;
         $this->gameToScheduleRepo = $gameToScheduleRepository;
+        $this->gameToScheduleService = $gameToScheduleService;
         $this->dateUtilityService = $dateUtilityService;
         $this->logger = $logger;
     }
@@ -275,6 +284,8 @@ class ScheduleService
      *          - delete game details from Game_To_Schedule
      *
      *       * denotes value may be set by team or set to ignore for team
+     *       * denotes both teams are initially included but if no slots are available
+     *         then may check only one of the teams
      * @todo When team schedule preferences defined, do scheduling in reverse order of complexity
      */
     private function executeSchedulingLogic()
@@ -288,10 +299,11 @@ class ScheduleService
         $divisionList = $this->createRandomDivisionOrder($divisionList);
         $this->io->text("--- Looping through the games to be scheduled and finding time slots");
         for ($weekNr = 1; $weekNr <= $this->maxWeeksToSchedule; $weekNr++) {
-            $this->io->text("\n        starting scheduling for week " . $weekNr);
+            $weekDatesInfo = $this->convertWeekNrToCalendarDates($weekNr);
+            $this->io->text("\n        starting scheduling for week " . $weekNr . " [" . $weekDatesInfo['start']->format("l, Y-m-d") .  "]");
             foreach ($divisionList as $division) {
                 $this->io->text("            processing Division " . $division);
-                $this->scheduleDivisionGamesInWeek($division, $weekNr);
+                $this->scheduleDivisionGamesInWeek($division, $weekNr, $weekDatesInfo);
             }
         }
     }
@@ -328,8 +340,9 @@ class ScheduleService
      *
      * @param string $division
      * @param int    $weekNr
+     * @param \DateTime[] $weekDatesInfo
      */
-    private function scheduleDivisionGamesInWeek(string $division, int $weekNr)
+    private function scheduleDivisionGamesInWeek(string $division, int $weekNr, array $weekDatesInfo)
     {
         $gamesToSchedule = $this->gameToScheduleRepo->findGamesForDivInWeek($division, $weekNr);
         if (empty($gamesToSchedule)) {
@@ -337,35 +350,55 @@ class ScheduleService
             return;
         }
 
-        $this->logger->debug("Week: " . $weekNr . "\nDivision: " . $division . "\n" . print_r($gamesToSchedule, true));
-
-        $weekDatesInfo = $this->convertWeekNrToCalendarDates($weekNr);
         foreach ($gamesToSchedule as $game) {
             $slotsAvail = $this->scheduledGameRepo->findAvailSlots($weekDatesInfo['start'], $weekDatesInfo['end']);
-            $slotsAvail = $this->filterAvailSlots($slotsAvail);
-            $this->assignSlot($slotsAvail);
-            $this->gameToScheduleRepo->remove($game->getGameToScheduleId());
+            $slotsAvail = $this->filterAvailSlots($game, $slotsAvail, $weekDatesInfo);
+            $gameIsScheduled = $this->assignSlot($game, $slotsAvail);
+            if ($gameIsScheduled) {
+                $this->gameToScheduleRepo->remove($game->getGameToScheduleId());
+            }
         }
     }
 
     /**
+     * @param GameToSchedule $game
      * @param ScheduledGame[] $slotsAvail
+     * @param \DateTime[] $weekDatesInfo
      *
      * @return ScheduledGame[]
      */
-    private function filterAvailSlots(array $slotsAvail)
+    private function filterAvailSlots(GameToSchedule $game, array $slotsAvail, array $weekDatesInfo)
     {
-        $this->logger->debug("Available Slots:\n" . print_r($slotsAvail, true));
+        $slotsAvail = $this->reviewRecentDays($game, $slotsAvail, $weekDatesInfo);
+        $slotsAvail = $this->reviewRecentTimes($game, $slotsAvail, $weekDatesInfo);
 
         return $slotsAvail;
     }
 
     /**
+     * From list of available slots, randomly pick one and assign the specified game to it
+     *
+     * @param GameToSchedule $game
      * @param ScheduledGame[] $slotsAvail
+     *
+     * @return bool  TRUE if game assigned to timeslot, false otherwise
      */
-    private function assignSlot(array $slotsAvail)
+    private function assignSlot(GameToSchedule $game, array $slotsAvail)
     {
-        return;
+        if (count($slotsAvail) < 1) {
+            $this->io->text("             [WARNING] No slot available for scheduling game: " . $game->getGameToScheduleId());
+            return false;
+        }
+
+        $slotToUse = mt_rand(0, count($slotsAvail) - 1);
+        $slotsAvail[$slotToUse]
+            ->setDivision($game->getDivision())
+            ->setVisitTeamId($game->getVisitTeamId())
+            ->setHomeTeamId($game->getHomeTeamId())
+            ->setTemplateScheduleWeekNumber($game->getWeekNr());
+        $this->scheduledGameRepo->save($slotsAvail[$slotToUse]);
+
+        return true;
     }
 
     /**
@@ -384,7 +417,100 @@ class ScheduleService
         $weekDatesInfo['end'] = new \DateTime($weekDatesInfo['start']->format("Y-m-d"));
         $weekDatesInfo['end']->add($daysToShift);
 
-
         return $weekDatesInfo;
+    }
+
+    /**
+     * @param GameToSchedule $game
+     * @param ScheduledGame[] $slotsAvail
+     * @param \DateTime[] $weekDatesInfo
+     *
+     * @return ScheduledGame[]
+     */
+    private function reviewRecentDays(GameToSchedule $game, array $slotsAvail, array $weekDatesInfo)
+    {
+        // We need to move n weeks back, where n is the number of consecutive weeks
+        $startDate = date(
+            "Y-m-d",
+            strtotime($weekDatesInfo['start']->format("Y-m-d") . " " . self::MAX_CONSECUTIVE_SAME_DAY . "weeks ago")
+        );
+
+        $pastGames = $this->scheduledGameRepo->findPastGamesForTeamId(
+            $game->getHomeTeamId(),
+            $startDate,
+            $weekDatesInfo['end']->format("Y-m-d")
+        );
+        $dayOfWeekFilterByHomeTeam = $this->sameDayOfWeek($pastGames);
+
+        $pastGames = $this->scheduledGameRepo->findPastGamesForTeamId(
+            $game->getVisitTeamId(),
+            $startDate,
+            $weekDatesInfo['end']->format("Y-m-d")
+        );
+        $dayOfWeekFilterByVisitTeam = $this->sameDayOfWeek($pastGames);
+
+        if (!empty($dayOfWeekFilterByHomeTeam) ||
+            !empty($dayOfWeekFilterByVisitTeam)
+        ) {
+            $this->gameToScheduleService->mapGameToSchedule($game);
+            $dump = "TOO MANY CONSECUTIVE GAMES CHECK\n";
+            $dump .= "Game details:\n" . $this->gameToScheduleService->dumpGameToSchedule($game);
+            if (!empty($dayOfWeekFilterByVisitTeam)) {
+                $dump .= "Visitor conflict: " . $dayOfWeekFilterByVisitTeam . "\n";
+            }
+            if (!empty($dayOfWeekFilterByHomeTeam)) {
+                $dump .= "Home conflict: " . $dayOfWeekFilterByHomeTeam . "\n";
+            }
+            $this->logger->debug($dump);
+        }
+
+        return $slotsAvail;
+    }
+
+    /**
+     * @param GameToSchedule $game
+     * @param ScheduledGame[] $slotsAvail
+     * @param \DateTime[] $weekDatesInfo
+     *
+     * @return ScheduledGame[]
+     */
+    private function reviewRecentTimes(GameToSchedule $game, array $slotsAvail, array $weekDatesInfo)
+    {
+        return $slotsAvail;
+    }
+
+    /**
+     * @param ScheduledGame[] $pastGames
+     *
+     * @return string
+     */
+    private function sameDayOfWeek(array $pastGames)
+    {
+        $dayOfWeekToFilter = null;
+        $consecutiveStreak = 0;
+        $index = 1;
+        $lastDate = null;
+
+        foreach ($pastGames as $dateToCheck) {
+
+//            $this->logger->debug("DAY of WEEK check:\nDate: " . $dateToCheck->getGameDate()->format("Y-m-d") . "\nDay of Week: " . $dateToCheck->getGameDate()->format("D"));
+
+            // If first time through, we set last date to the current date; this will force the
+            // next check to pass (since we are comparing against the same date) so the streak will
+            // increase to 1 which is fair game
+            $lastDate = empty($lastDate) ? $dateToCheck->getGameDate()->format("D") : $lastDate;
+            if ($lastDate == $dateToCheck->getGameDate()->format("D")) {
+                $consecutiveStreak++;
+            } else {
+                $consecutiveStreak = 0;
+            }
+            $index++;
+        }
+
+        if ($consecutiveStreak >= self::MAX_CONSECUTIVE_SAME_DAY) {
+            $dayOfWeekToFilter = $pastGames[0]->getGameDate()->format("D");
+        }
+
+        return $dayOfWeekToFilter;
     }
 }

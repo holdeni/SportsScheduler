@@ -96,6 +96,12 @@ class GameToSchedule
      */
     private $weekNr;
 
+    /** @var string */
+    private $homeTeamName;
+
+    /** @var string */
+    private $visitTeamName;
+
     /**
      * @return int
      */
@@ -215,4 +221,46 @@ class GameToSchedule
 
         return $this;
     }
+
+    /**
+     * @return string
+     */
+    public function getHomeTeamName(): string
+    {
+        return $this->homeTeamName;
+    }
+
+    /**
+     * @param string $homeTeamName
+     *
+     * @return GameToSchedule
+     */
+    public function setHomeTeamName(string $homeTeamName): GameToSchedule
+    {
+        $this->homeTeamName = $homeTeamName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVisitTeamName(): string
+    {
+        return $this->visitTeamName;
+    }
+
+    /**
+     * @param string $visitTeamName
+     *
+     * @return GameToSchedule
+     */
+    public function setVisitTeamName(string $visitTeamName): GameToSchedule
+    {
+        $this->visitTeamName = $visitTeamName;
+
+        return $this;
+    }
+
+
 }

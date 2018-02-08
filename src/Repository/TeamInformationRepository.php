@@ -84,6 +84,8 @@ class TeamInformationRepository extends ServiceEntityRepository
      */
     public function getListOfTeamDivisions()
     {
+        $divisionList = array();
+
         $sql = "SELECT DISTINCT(ti.teamDivision)
                 FROM App:TeamInformation ti
                 ORDER BY ti.teamDivision
@@ -97,5 +99,28 @@ class TeamInformationRepository extends ServiceEntityRepository
         }
 
         return $divisionList;
+    }
+
+    /**
+     * Get name of team from provided id
+     *
+     * @param int $teamId
+     *
+     * @return string
+     */
+    public function getTeamName(int $teamId)
+    {
+        $sql = "SELECT ti.teamName
+                FROM App:TeamInformation ti
+                WHERE ti.teamInformationId = :teamId
+               ";
+        $teamName = $this->getEntityManager()
+            ->createQuery($sql)
+            ->setParameters(array(
+                'teamId' => $teamId,
+            ))
+            ->getResult(Query::HYDRATE_SINGLE_SCALAR);
+
+        return $teamName;
     }
 }
