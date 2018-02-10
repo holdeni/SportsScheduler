@@ -110,8 +110,6 @@ class ScheduledGameService
             $scheduledGamesDump[$month][$dayInMonth][] = $this->formatAsArray($game);
         }
 
-        $this->logger->debug(print_r($scheduledGamesDump, true));
-
         return $scheduledGamesDump;
     }
 }
