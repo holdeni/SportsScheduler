@@ -15,6 +15,10 @@ class DefaultController extends Controller
 {
     /**
      * @Route("/", name="default")
+     *
+     * @param ScheduledGameService $scheduledGameService
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function index(ScheduledGameService $scheduledGameService)
     {

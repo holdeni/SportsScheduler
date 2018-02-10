@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\ScheduledGame;
 use App\Repository\ScheduledGameRepository;
 use App\Repository\TeamInformationRepository;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class ScheduledGameService
@@ -18,18 +19,24 @@ class ScheduledGameService
     /** @var TeamInformationRepository */
     private $teamInformationRepo;
 
+    /** @var LoggerInterface */
+    private $logger;
+
     /**
      * ScheduledGameService constructor.
      *
      * @param ScheduledGameRepository $scheduledGameRepository
      * @param TeamInformationRepository $teamInformationRepository
+     * @param LoggerInterface $logger
      */
     public function __construct(
         ScheduledGameRepository $scheduledGameRepository,
-        TeamInformationRepository $teamInformationRepository
+        TeamInformationRepository $teamInformationRepository,
+        LoggerInterface $logger
     ) {
         $this->scheduledGameRepo = $scheduledGameRepository;
         $this->teamInformationRepo = $teamInformationRepository;
+        $this->logger = $logger;
     }
 
     /**
@@ -98,8 +105,12 @@ class ScheduledGameService
         $scheduledGames = $this->scheduledGameRepo->listAllScheduledGame();
         foreach ($scheduledGames as $game) {
             $this->mapScheduledGame($game);
-            $scheduledGamesDump[] = $this->formatAsArray($game);
+            $month = $game->getGameDate()->format("M");
+            $dayInMonth = $game->getGameDate()->format("j");
+            $scheduledGamesDump[$month][$dayInMonth][] = $this->formatAsArray($game);
         }
+
+        $this->logger->debug(print_r($scheduledGamesDump, true));
 
         return $scheduledGamesDump;
     }

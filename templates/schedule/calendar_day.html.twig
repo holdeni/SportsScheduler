@@ -1,0 +1,20 @@
+<table class="table border-0 table-sm table-striped">
+    {% for activity in gamesInMonth[day] %}
+        {% if activity.Teams is empty %}
+        {%     set rowClass = "table-success" %}
+        {% else %}
+        {%     set rowClass = "table-primary" %}
+        {% endif %}
+        <tr class="{{ rowClass }}">
+            <td>
+                {{ activity.Time }}
+            </td>
+            <td>
+                {{ activity.Location }}
+            </td>
+            <td class="text-nowrap">
+                {{ activity.Teams }}
+            </td>
+        </tr>
+    {% endfor %}
+</table>

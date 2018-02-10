@@ -119,7 +119,7 @@ class ScheduledGameRepository extends ServiceEntityRepository
     {
         $sql = "SELECT sg
                 FROM App:ScheduledGame sg
-                ORDER BY sg.gameDate, sg.gameLocation, sg.gameTime
+                ORDER BY sg.gameDate, sg.gameTime, sg.gameLocation
                ";
         $dbData = $this->getEntityManager()
             ->createQuery($sql)
