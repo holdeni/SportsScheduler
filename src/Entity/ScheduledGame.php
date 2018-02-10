@@ -175,10 +175,10 @@ class ScheduledGame
     private $templateScheduleWeekNumber;
 
     /** @var string */
-    private $homeTeamName;
+    private $homeTeamName = '';
 
     /** @var string */
-    private $visitTeamName;
+    private $visitTeamName = '';
 
     /**
      * @return int

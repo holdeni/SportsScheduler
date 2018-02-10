@@ -1,0 +1,37 @@
+<div class="container-fluid">
+    <div class="jumbotron">
+        <h1 class="">Softball Scheduler</h1>
+        <p class="lead">The lead goes here</p>
+    </div>
+    {% for game in schedule %}
+        <div class="row">
+            <table class="table">
+                <tr>
+                    <td>
+                        Date:
+                    </td>
+                    <td>
+                        {{ game.Date }}
+                    </td>
+                    <td>
+                        Time:
+                    </td>
+                    <td>
+                        {{ game.Time }}
+                    </td>
+                    <td>
+                        Diamond:
+                    </td>
+                    <td>
+                        {{ game.Location }}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        {{ game.Teams }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    {% endfor %}
+</div>

@@ -111,4 +111,20 @@ class ScheduledGameRepository extends ServiceEntityRepository
 
         return $dbData;
     }
+
+    /**
+     * @return ScheduledGame[]
+     */
+    public function listAllScheduledGame()
+    {
+        $sql = "SELECT sg
+                FROM App:ScheduledGame sg
+                ORDER BY sg.gameDate, sg.gameLocation, sg.gameTime
+               ";
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->getResult(Query::HYDRATE_OBJECT);
+
+        return $dbData;
+    }
 }
