@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Repository\ScheduledGameRepository;
 use App\Service\ScheduledGameService;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;

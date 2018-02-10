@@ -113,17 +113,33 @@ class ScheduledGameRepository extends ServiceEntityRepository
     }
 
     /**
+     * Get list of all games in schedule, possibly limited to specific team
+     *
+     * @param int $teamId  Defaults to 0 meaning show every teams' games
+     *
      * @return ScheduledGame[]
      */
-    public function listAllScheduledGame()
+    public function listAllScheduledGame($teamId = 0)
     {
+        if ($teamId > 0) {
+            $where = " WHERE sg.homeTeamId = :teamId OR sg.visitTeamId = :teamId ";
+        }
+
         $sql = "SELECT sg
-                FROM App:ScheduledGame sg
-                ORDER BY sg.gameDate, sg.gameTime, sg.gameLocation
-               ";
-        $dbData = $this->getEntityManager()
-            ->createQuery($sql)
-            ->getResult(Query::HYDRATE_OBJECT);
+                FROM App:ScheduledGame sg";
+        if ($teamId > 0) {
+            $sql .= $where;
+        }
+        $sql .= " ORDER BY sg.gameDate, sg.gameTime, sg.gameLocation";
+
+        $query = $this->getEntityManager()
+            ->createQuery($sql);
+        if ($teamId > 0) {
+            $query->setParameters(array(
+                'teamId' => $teamId,
+            ));
+        }
+        $dbData = $query->getResult(Query::HYDRATE_OBJECT);
 
         return $dbData;
     }
