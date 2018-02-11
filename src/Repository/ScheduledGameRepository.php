@@ -68,6 +68,7 @@ class ScheduledGameRepository extends ServiceEntityRepository
                 FROM App:ScheduledGame sg
                 WHERE sg.gameDate BETWEEN :startDate AND :endDate
                   AND sg.homeTeamId IS NULL
+                ORDER BY sg.gameDate, sg.gameTime
                ";
 
         $dbData = $this->getEntityManager()

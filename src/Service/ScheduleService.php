@@ -272,13 +272,15 @@ class ScheduleService
     }
 
     /**
-     * @todo Start processing games to be scheduled and fit them into the schedule
+     * Start processing games to be scheduled and fit them into the schedule
+     *
+     * Logic used
      *       1. Randomly or in a set sequence, pick a division
      *       2. For each game in that division
      *          - create list of acceptable dates to schedule the game on
      *              . avoid n games in a row on same night*
-     *              . avoid n games in a row at the same time*
-     *              . maintain 40% usage of both diamonds
+     *              . @todo avoid n games in a row at the same time*
+     *              . @todo maintain 40% usage of both diamonds
      *          - randomly pick on of the acceptable dates
      *          - copy game details into Scheduled_Game table
      *          - delete game details from Game_To_Schedule
@@ -286,6 +288,7 @@ class ScheduleService
      *       * denotes value may be set by team or set to ignore for team
      *       * denotes both teams are initially included but if no slots are available
      *         then may check only one of the teams
+     *
      * @todo When team schedule preferences defined, do scheduling in reverse order of complexity
      */
     private function executeSchedulingLogic()
@@ -440,28 +443,30 @@ class ScheduleService
             $startDate,
             $weekDatesInfo['end']->format("Y-m-d")
         );
-        $dayOfWeekFilterByHomeTeam = $this->sameDayOfWeek($pastGames);
+        $dayOfWeekFilter['Home'] = $this->sameDayOfWeek($pastGames);
 
         $pastGames = $this->scheduledGameRepo->findPastGamesForTeamId(
             $game->getVisitTeamId(),
             $startDate,
             $weekDatesInfo['end']->format("Y-m-d")
         );
-        $dayOfWeekFilterByVisitTeam = $this->sameDayOfWeek($pastGames);
+        $dayOfWeekFilter['Visitor'] = $this->sameDayOfWeek($pastGames);
 
-        if (!empty($dayOfWeekFilterByHomeTeam) ||
-            !empty($dayOfWeekFilterByVisitTeam)
+        if (!empty($dayOfWeekFilter['Home']) ||
+            !empty($dayOfWeekFilter['Visitor'])
         ) {
             $this->gameToScheduleService->mapGameToSchedule($game);
             $dump = "TOO MANY CONSECUTIVE GAMES CHECK\n";
             $dump .= "Game details:\n" . $this->gameToScheduleService->dumpGameToSchedule($game);
-            if (!empty($dayOfWeekFilterByVisitTeam)) {
-                $dump .= "Visitor conflict: " . $dayOfWeekFilterByVisitTeam . "\n";
+            if (!empty($dayOfWeekFilter['Visitor'])) {
+                $dump .= "Visitor conflict: " . $dayOfWeekFilter['Visitor'] . "\n";
             }
-            if (!empty($dayOfWeekFilterByHomeTeam)) {
-                $dump .= "Home conflict: " . $dayOfWeekFilterByHomeTeam . "\n";
+            if (!empty($dayOfWeekFilter['Home'])) {
+                $dump .= "Home conflict: " . $dayOfWeekFilter['Home'] . "\n";
             }
             $this->logger->debug($dump);
+
+            $slotsAvail = $this->removeSlotsByDay($dayOfWeekFilter, $slotsAvail);
         }
 
         return $slotsAvail;
@@ -493,7 +498,10 @@ class ScheduleService
 
         foreach ($pastGames as $dateToCheck) {
 
-//            $this->logger->debug("DAY of WEEK check:\nDate: " . $dateToCheck->getGameDate()->format("Y-m-d") . "\nDay of Week: " . $dateToCheck->getGameDate()->format("D"));
+//            $this->logger->debug("DAY of WEEK check:\nDate: " .
+//                $dateToCheck->getGameDate()->format("Y-m-d") .
+//                "\nDay of Week: " . $dateToCheck->getGameDate()->format("D")
+//            );
 
             // If first time through, we set last date to the current date; this will force the
             // next check to pass (since we are comparing against the same date) so the streak will
@@ -512,5 +520,29 @@ class ScheduleService
         }
 
         return $dayOfWeekToFilter;
+    }
+
+    /**
+     * @param string[] $dayOfWeekFilter
+     * @param ScheduledGame[] $slotsAvail
+     *
+     * @return ScheduledGame[]
+     */
+    private function removeSlotsByDay(array $dayOfWeekFilter, array $slotsAvail)
+    {
+        foreach ($dayOfWeekFilter as $dayOfWeek) {
+            if (!empty($dayOfWeek)) {
+                foreach ($slotsAvail as $key => $openSlot) {
+                    if ($openSlot->getGameDate()->format("D") == $dayOfWeek) {
+                        array_splice($slotsAvail, $key, 1);
+                    }
+                }
+            }
+        }
+
+//        $this->logger->debug("Current Slots availble:\n" . print_r($slotsAvail, true));
+//        $this->logger->debug("Number of slots available: " . count($slotsAvail));
+
+        return $slotsAvail;
     }
 }
