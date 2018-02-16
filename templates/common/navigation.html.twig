@@ -15,6 +15,11 @@
             <button class="btn btn-link {{ displayClass }}">
                 <a href="{{ path('report_home_and_away') }}">Report - Home &amp; Away</a>
             </button>
+
+            {% set displayClass = (module == 'report_nights_and_times') ? "btn-outline-success" : "" %}
+            <button class="btn btn-link {{ displayClass }}">
+                <a href="{{ path('report_nights_and_times') }}">Report - Nights &amp; Times</a>
+            </button>
         </div>
     </div>
     <div class="row">

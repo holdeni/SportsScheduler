@@ -61,7 +61,7 @@ class DefaultController extends Controller
     }
 
     /**
-     * Display Home and Away report
+     * Display home and away report for teams over schedule
      *
      * @Route(
      *     "/report_home_n_away",
@@ -81,6 +81,32 @@ class DefaultController extends Controller
             array(
                 'title' => "Softball Scheduler",
                 'module' => 'report_home_and_away',
+                'report' => $reportData,
+            )
+        );
+    }
+
+    /**
+     * Display nights and times for teams over schedule
+     *
+     * @Route(
+     *     "/report_nite_n_time",
+     *     name="report_nights_and_times"
+     * )
+     *
+     * @param ReportService $reportService
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function reportNightsAndTimesAction(ReportService $reportService)
+    {
+        $reportData = $reportService->nightsAndTimes();
+
+        return $this->render(
+            'base.html.twig',
+            array(
+                'title' => "Softball Scheduler",
+                'module' => 'report_nights_and_times',
                 'report' => $reportData,
             )
         );

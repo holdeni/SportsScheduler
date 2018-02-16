@@ -17,6 +17,8 @@
                     {% include 'schedule/schedule.html.twig' %}
                 {% elseif module == 'report_home_and_away' %}
                     {% include 'reports/home_and_away.html.twig' %}
+                {% elseif module == 'report_nights_and_times' %}
+                    {% include 'reports/nights_and_times.html.twig' %}
                 {% else %}
                     {% include 'about.html.twig' %}
                 {% endif %}
