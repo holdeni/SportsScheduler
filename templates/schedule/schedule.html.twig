@@ -1,9 +1,7 @@
-<div class="container-fluid">
-    <div class="jumbotron">
-        <h1 class="">Softball Scheduler</h1>
-        <p class="lead">The lead goes here</p>
+<div>
+    <div class="row">
+        <h4>League Schedule - Calendar</h4>
     </div>
-
     {% for time, gamesInMonth in schedule %}
         <div class="row">
             {% include 'schedule/calendar_month.html.twig' %}

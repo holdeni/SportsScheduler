@@ -1,0 +1,23 @@
+<div>
+    <div class="row">
+        <div class="btn-group" role="group">
+            {% set displayClass = (module == 'about') ? "btn-outline-success" : "" %}
+            <button class="btn btn-link {{ displayClass }}">
+                <a href="{{ path('about') }}">Home</a>
+            </button>
+
+            {% set displayClass = (module == 'calendar_schedule') ? "btn-outline-success" : "" %}
+            <button class="btn btn-link {{ displayClass }}">
+                <a href="{{ path('calendar_schedule') }}">League Schedule</a>
+            </button>
+
+            {% set displayClass = (module == 'report_home_and_away') ? "btn-outline-success" : "" %}
+            <button class="btn btn-link {{ displayClass }}">
+                <a href="{{ path('report_home_and_away') }}">Report - Home &amp; Away</a>
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        &nbsp;
+    </div>
+</div>

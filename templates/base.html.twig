@@ -4,9 +4,25 @@
         {% include 'common/header.html.twig' %}
     </head>
     <body>
-        {% block body %}
-            {% include 'schedule/schedule.html.twig' %}
-        {% endblock %}
+        <div class="container">
+            <div class="jumbotron">
+                <h1 class="">Softball Scheduler</h1>
+                <p class="lead">The lead goes here</p>
+            </div>
+
+            {% include "common/navigation.html.twig" %}
+
+            {% block module %}
+                {% if module == 'calendar_schedule' %}
+                    {% include 'schedule/schedule.html.twig' %}
+                {% elseif module == 'report_home_and_away' %}
+                    {% include 'reports/home_and_away.html.twig' %}
+                {% else %}
+                    {% include 'about.html.twig' %}
+                {% endif %}
+            {% endblock %}
+
+        </div>
         {% include 'common/footer.html.twig' %}
     </body>
 </html>
