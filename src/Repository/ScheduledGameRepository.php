@@ -7,6 +7,7 @@ use App\Entity\ScheduledGame;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ScheduledGameRepository
@@ -122,6 +123,7 @@ class ScheduledGameRepository extends ServiceEntityRepository
      */
     public function listAllScheduledGame($teamId = 0)
     {
+        $where = '';
         if ($teamId > 0) {
             $where = " WHERE sg.homeTeamId = :teamId OR sg.visitTeamId = :teamId ";
         }
@@ -143,5 +145,40 @@ class ScheduledGameRepository extends ServiceEntityRepository
         $dbData = $query->getResult(Query::HYDRATE_OBJECT);
 
         return $dbData;
+    }
+
+    /**
+     * Get the count of games team is either Home or Away
+     *
+     * @param int    $teamId
+     * @param string $selector  One of HOME or AWAY
+     *
+     * @return int
+     */
+    public function getCountHomeAndAwayForTeam(int $teamId, string $selector)
+    {
+        if ($selector == "HOME") {
+            $fieldSelector = "sg.homeTeamId";
+        } elseif ($selector == "AWAY") {
+            $fieldSelector = "sg.visitTeamId";
+        } else {
+            throw new \InvalidArgumentException(
+                'Value of {selector} parameter must be HOME or AWAY: ' . print_r($selector, true),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+        $sql = "SELECT COUNT(sg)
+                FROM App:ScheduledGame sg
+                WHERE " . $fieldSelector  . " = :teamId
+                ";
+
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->setParameters(array(
+                'teamId' => $teamId
+            ))
+            ->getResult(Query::HYDRATE_SINGLE_SCALAR);
+
+        return (int) $dbData;
     }
 }

@@ -5,16 +5,29 @@ namespace App\Repository;
 use App\Entity\GameLocation;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
+/**
+ * Class GameLocationRepository
+ * @package App\Repository
+ */
 class GameLocationRepository extends ServiceEntityRepository
 {
+    /**
+     * GameLocationRepository constructor.
+     *
+     * @param RegistryInterface $registry
+     */
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, GameLocation::class);
     }
 
+    /**
+     * Save record to database
+     *
+     * @param GameLocation $entity
+     */
     public function save(GameLocation $entity)
     {
         $em = $this->getEntityManager();
@@ -24,11 +37,13 @@ class GameLocationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Get game locations allocated to specified day of week
+     *
      * @param string $dayOfWeek
      *
      * @return GameLocation[] | null
      */
-    public function fetchGamesSlatedForDayOfWeek(string $dayOfWeek)
+    public function fetchLocationsSlatedForDayOfWeek(string $dayOfWeek)
     {
         $em = $this->getEntityManager();
         $sql = "SELECT gl

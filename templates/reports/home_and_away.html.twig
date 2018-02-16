@@ -1,5 +1,50 @@
 <div>
     <div class="row">
-        <h4>Home and Away Report</h4>
+        <h3>Home and Away Report</h3>
     </div>
+
+    {% for division, teamData in report %}
+        <div class="row">
+            <h4>Division {{ division }}</h4>
+        </div>
+
+        <div class="row">
+            <div class="col-2 offset-1">
+                <span class="text-center font-weight-bold">
+                    Team
+                </span>
+            </div>
+            <div class="col-1">
+                <span class="text-center font-weight-bold">
+                    Away
+                </span>
+            </div>
+            <div class="col-1">
+                <span class="text-center font-weight-bold">
+                   Home
+                </span>
+            </div>
+        </div>
+
+        {% for name, stats in teamData %}
+            <div class="row">
+                <div class="col-2 offset-1">
+                    <span class="text-left">{{ name }}</span>
+                </div>
+
+                {% for stat in stats %}
+                    <div class="col-1">
+                        {{ stat }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        {% if not loop.last %}
+            <div class="row">
+                <div class="col-5">
+                    <hr class="hr-med"/>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
 </div>

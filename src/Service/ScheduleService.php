@@ -218,7 +218,7 @@ class ScheduleService
                 $dayOfWeekValue = (int) $weekDatesInfo['start']->format("N");
                 $this->logger->debug("Day of Week: " . $dayOfWeekValue);
                 $dbData = $this->gameLocationRepo
-                    ->fetchGamesSlatedForDayOfWeek(
+                    ->fetchLocationsSlatedForDayOfWeek(
                         $this->dateUtilityService->getDayOfWeekText($dayOfWeekValue)
                     );
                 if (!empty($dbData)) {

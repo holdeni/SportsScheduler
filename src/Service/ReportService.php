@@ -8,6 +8,9 @@
 
 namespace App\Service;
 
+use App\Repository\ScheduledGameRepository;
+use App\Repository\TeamInformationRepository;
+
 
 /**
  * Class ReportService
@@ -15,8 +18,24 @@ namespace App\Service;
  */
 class ReportService
 {
-    public function __construct()
-    {
+    /** @var ScheduledGameRepository */
+    private $scheduledGameRepo;
+
+    /** @var TeamInformationRepository */
+    private $teamInformationRepo;
+
+    /**
+     * ReportService constructor.
+     *
+     * @param ScheduledGameRepository $scheduledGameRepository
+     * @param TeamInformationRepository $teamInformationRepository
+     */
+    public function __construct(
+        ScheduledGameRepository $scheduledGameRepository,
+        TeamInformationRepository $teamInformationRepository
+    ) {
+        $this->scheduledGameRepo = $scheduledGameRepository;
+        $this->teamInformationRepo = $teamInformationRepository;
     }
 
     /**
@@ -25,6 +44,22 @@ class ReportService
     public function homeAndAway()
     {
         $reportData = array();
+        $divList = $this->teamInformationRepo->getListOfTeamDivisions();
+        foreach ($divList as $division) {
+            $teamList = $this->teamInformationRepo->getListOfTeamsInDivision($division);
+            foreach ($teamList as $team) {
+                $reportData[$division][$team->getTeamName()]['AWAY'] =
+                    $this->scheduledGameRepo->getCountHomeAndAwayForTeam(
+                        $team->getTeamInformationId(),
+                        'AWAY'
+                    );
+                $reportData[$division][$team->getTeamName()]['HOME'] =
+                    $this->scheduledGameRepo->getCountHomeAndAwayForTeam(
+                        $team->getTeamInformationId(),
+                        'HOME'
+                    );
+            }
+        }
 
         return $reportData;
     }

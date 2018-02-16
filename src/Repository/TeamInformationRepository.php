@@ -56,6 +56,8 @@ class TeamInformationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Map the id of team in division to its unique team id in the league
+     *
      * @param int    $teamDivisionId
      * @param string $division
      *
@@ -80,6 +82,8 @@ class TeamInformationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Get set of divisions in league
+     *
      * @return string[]
      */
     public function getListOfTeamDivisions()
@@ -99,6 +103,30 @@ class TeamInformationRepository extends ServiceEntityRepository
         }
 
         return $divisionList;
+    }
+
+    /**
+     * Get list of teams in specified division
+     *
+     * @param string $division
+     *
+     * @return TeamInformation[] | null
+     */
+    public function getListOfTeamsInDivision(string $division)
+    {
+        $sql = "SELECT ti
+                FROM App:TeamInformation ti
+                WHERE ti.teamDivision = :division
+                ORDER BY ti.teamInformationId
+               ";
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->setParameters(array(
+                'division' => $division,
+            ))
+            ->getResult(Query::HYDRATE_OBJECT);
+
+        return $dbData;
     }
 
     /**

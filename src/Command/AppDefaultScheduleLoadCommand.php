@@ -12,6 +12,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+/**
+ * Class AppDefaultScheduleLoadCommand
+ * @package App\Command
+ */
 class AppDefaultScheduleLoadCommand extends ContainerAwareCommand
 {
     protected static $defaultName = 'app:default-schedule:load';
@@ -31,12 +35,21 @@ class AppDefaultScheduleLoadCommand extends ContainerAwareCommand
     /** @var DefaultScheduleRepository */
     protected $defaultScheduleRepo;
 
+    /**
+     * Prepare the command
+     *
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $em  = $this->getContainer()->get('doctrine')->getManager();
         $this->defaultScheduleRepo = $em->getRepository('App:DefaultSchedule');
     }
 
+    /**
+     * List command-specific options
+     */
     protected function configure()
     {
         $this
@@ -55,6 +68,14 @@ class AppDefaultScheduleLoadCommand extends ContainerAwareCommand
         ;
     }
 
+    /**
+     * Do the job
+     *
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @return int|null|void
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->io = new SymfonyStyle($input, $output);
@@ -63,6 +84,8 @@ class AppDefaultScheduleLoadCommand extends ContainerAwareCommand
 
         $this->validateArguments($arguments);
 
+        $this->deleteExistingData();
+
         $this->openCsvFile();
         $this->processCSVLoad();
         $this->closeCsvFile();
@@ -70,6 +93,11 @@ class AppDefaultScheduleLoadCommand extends ContainerAwareCommand
         $this->io->success('... scheduled has been successfully loaded');
     }
 
+    /**
+     * Validate command line arguments
+     *
+     * @param array $arguments
+     */
     protected function validateArguments(array $arguments)
     {
         foreach ($arguments as $argumentKey => $argumentValue) {
@@ -104,6 +132,15 @@ class AppDefaultScheduleLoadCommand extends ContainerAwareCommand
         }
     }
 
+    protected function deleteExistingData()
+    {
+        $this->io->text("... deleting any existing schedule for division format " . $this->divFormat);
+        $this->defaultScheduleRepo->delete($this->divFormat);
+    }
+
+    /**
+     * Open CSV file
+     */
     protected function openCsvFile()
     {
         $this->csvFileHandle = fopen($this->csvFilename, "r");
@@ -113,6 +150,9 @@ class AppDefaultScheduleLoadCommand extends ContainerAwareCommand
 
     }
 
+    /**
+     * Close CSV file
+     */
     protected function closeCsvFile()
     {
         if ($this->csvFileHandle != null) {
@@ -120,6 +160,9 @@ class AppDefaultScheduleLoadCommand extends ContainerAwareCommand
         }
     }
 
+    /**
+     * Load CSV file into memory
+     */
     protected function processCSVLoad()
     {
         $row = 0;

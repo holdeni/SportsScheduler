@@ -55,6 +55,7 @@ class GameToScheduleRepository extends ServiceEntityRepository
 
     /**
      * Get the games for a specific division in the requested week
+     *
      * @param string $division
      * @param int    $weekNr
      *
@@ -79,6 +80,8 @@ class GameToScheduleRepository extends ServiceEntityRepository
     }
 
     /**
+     * Remove a record from the database
+     *
      * @param int $gameToScheduleId
      *
      * @throws \Doctrine\ORM\ORMException
