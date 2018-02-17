@@ -1,0 +1,14 @@
+<th>
+    <table class="table table-sm">
+        <tr class="table-info">
+            <th colspan="3" class="border-bottom-0 text-center">
+                {{ colHeader }}
+            </th>
+        </tr>
+        <tr class="table-info">
+            {% for slot in report.timeslots %}
+                <th class="border-bottom-0 text-center">{{ slot.time }}</th>
+            {% endfor %}
+        </tr>
+    </table>
+</th>

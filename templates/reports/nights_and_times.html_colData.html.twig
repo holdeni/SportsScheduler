@@ -1,0 +1,14 @@
+<td>
+    <table class="table table-sm">
+        <tr>
+            <td colspan="3" class="table-success text-center">
+                {{ stats.Totals[colHeader] }}
+            </td>
+        </tr>
+        <tr>
+            {% for slot in report.timeslots|keys %}
+                <td class="border-0 text-center">{{ stats[colHeader][slot] }}</td>
+            {% endfor %}
+        </tr>
+    </table>
+</td>

@@ -2,6 +2,9 @@
     <div class="row">
         <h3>Day of Week and Time Usage Report</h3>
     </div>
+    <div class="row">
+        &nbsp;
+    </div>
 
     {% for division, teamData in report.data %}
         <div class="row">
@@ -10,56 +13,35 @@
 
         <div class="row">
             <div class="col-12">
-                <table class="table">
-                    <tr>
-                        <th>Team</th>
-                        {% for dayOfWeek in report.daysOfWeek %}
-                            <th>{{ dayOfWeek }}</th>
-                        {% endfor %}
-                        <th>Totals</th>
-                    </tr>
-                    <tr>
-                        <th>&nbsp;</th>
-                        {% for dayOfWeek in report.daysOfWeek %}
-                            <th>
-                                <table class="table border-0 table-sm">
-                                    <tr>
-                                        {% for slot in report.timeslots %}
-                                            <th>{{ slot.time }}</th>
-                                        {% endfor %}
-                                    </tr>
-                                </table>
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="table-info">
+                            <th class="border-bottom-0 text-center align-middle">
+                                Team
                             </th>
-                        {% endfor %}
-                        <th>
-                            <table class="table border-0 table-sm">
-                                <tr>
-                                    {% for slot in report.timeslots %}
-                                        <th>{{ slot.time }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </table>
-                         </th>
-                    </tr>
-
-                    {% for name, stats in teamData %}
-                        <tr>
-                            <td>{{ name }}</td>
-                            {% for dayOfWeek in report.daysOfWeek %}
-                                <td>
-                                    <table class="table border-0 table-sm">
-                                        <tr>
-                                            {% for slot in report.timeslots|keys %}
-                                                <td>{{ stats[dayOfWeek][slot] }}</td>
-                                            {% endfor %}
-                                        </tr>
-                                    </table>
-                                </td>
+                            {% for colHeader in report.daysOfWeek %}
+                                {% include 'reports/nights_and_times_colHeader.html.twig' %}
                             {% endfor %}
                         </tr>
-                    {% endfor %}
+                    </thead>
+
+                    <tbody>
+                        {% for name, stats in teamData %}
+                            <tr>
+                                <td>
+                                    {{ name }}
+                                </td>
+                                {% for colHeader in report.daysOfWeek %}
+                                    {% include 'reports/nights_and_times.html_colData.html.twig' %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
                 </table>
             </div>
+        </div>
+        <div class="row">
+            &nbsp;
         </div>
      {% endfor %}
 </div>

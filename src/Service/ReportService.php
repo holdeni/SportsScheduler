@@ -25,6 +25,18 @@ class ReportService
     /** @var TeamInformationRepository */
     private $teamInformationRepo;
 
+    /** @var array */
+    private $daysOfWeek = array(
+        'Sun',
+        'Mon',
+        'Tue',
+        'Wed',
+        'Thu',
+        'Fri',
+        'Sat',
+        'Sun',
+    );
+
     /**
      * ReportService constructor.
      *
@@ -98,6 +110,7 @@ class ReportService
 //                'Fri',
 //                'Sat',
 //                'Sun',
+                'Totals',
             ),
             'data' => array(),
         );
@@ -143,9 +156,22 @@ class ReportService
                 case '21:30':
                     $timeslot = 'slot3';
                     break;
+
+                default:
+                    // @todo This should throw an exception
+                    $timeslot = '';
+                    break;
             }
 
             $data[$dayOfWeek][$timeslot]++;
+            $data['Totals'][$timeslot]++;
+        }
+
+        foreach ($this->daysOfWeek as $dayOfWeek ) {
+            foreach ($data[$dayOfWeek] as $timeslot => $value) {
+                $data['Totals'][$dayOfWeek] += $value;
+                $data['Totals']['Totals'] += $value;
+            }
         }
 
         return $data;
@@ -160,28 +186,26 @@ class ReportService
     {
         $row = array();
 
-        $daysOfWeek = array(
-            'Sun',
-            'Mon',
-            'Tue',
-            'Wed',
-            'Thu',
-            'Fri',
-            'Sat',
-            'Sun',
-        );
+        $indices = $this->daysOfWeek;
+        $indices[] = 'Totals';
+
         $timeslots = array(
             'slot1',
             'slot2',
             'slot3',
         );
 
-        foreach ($daysOfWeek as $day) {
-            $row[$day] = array();
+        foreach ($indices as $index) {
+            $row[$index] = array();
             foreach ($timeslots as $slot) {
-                $row[$day][$slot] = 0;
+                $row[$index][$slot] = 0;
             }
         }
+
+        foreach ($this->daysOfWeek as $dayOfWeek) {
+            $row['Totals'][$dayOfWeek] = 0;
+        }
+        $row['Totals']['Totals'] = 0;
 
         return $row;
     }
