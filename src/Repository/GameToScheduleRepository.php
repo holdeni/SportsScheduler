@@ -95,4 +95,21 @@ class GameToScheduleRepository extends ServiceEntityRepository
         $em->remove($record);
         $em->flush();
     }
+
+    /**
+     * Return count of games left to fit into the schedule
+     *
+     * @return int
+     */
+    public function howManyGamesLeftToSchedule()
+    {
+        $sql = "SELECT COUNT(gts)
+                FROM App:GameToSchedule gts
+               ";
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->getResult(Query::HYDRATE_SINGLE_SCALAR);
+
+        return $dbData;
+    }
 }

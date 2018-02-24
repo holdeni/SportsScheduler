@@ -100,14 +100,14 @@ class ScheduleService
     }
 
     /**
+     * Generate schedule - determine games to schedule, create open slots and assign games to slots
+     *
      * @param string $scheduleStartDate
      * @param int    $gameLengthInMins
      * @param array  $flowControl
      * @param SymfonyStyle $io
      *
      * @return bool
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function generateSchedule(
         string $scheduleStartDate,
@@ -140,9 +140,15 @@ class ScheduleService
         // Do the heavy lifting now - generate that dang schedule from all the pieces we have
         $this->executeSchedulingLogic();
 
+        // See if there was any games left to schedule
+        $this->io->note("Games left to schedule: " . $this->gameToScheduleRepo->howManyGamesLeftToSchedule());
+
         return true;
     }
 
+    /**
+     * Delete existing schedule details
+     */
     private function truncateScheduleTables()
     {
         $this->io->warning("Deleting existing scheduling details");
@@ -151,8 +157,7 @@ class ScheduleService
     }
 
     /**
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * Create list of games to be scheduled
      */
     private function determineGamesToSchedule()
     {
@@ -195,7 +200,7 @@ class ScheduleService
     }
 
     /**
-     *
+     * Create open slots for complete schedule
      */
     private function createTimeSlots()
     {
@@ -238,6 +243,8 @@ class ScheduleService
     }
 
     /**
+     * Create open slots in the schedule
+     *
      * @param GameLocation[] $dbData
      * @param \DateTime $dateToSchedule
      */
@@ -312,6 +319,8 @@ class ScheduleService
     }
 
     /**
+     * Create a random ordering of the divisions
+     *
      * @param $divisionList
      *
      * @return string[]
@@ -364,6 +373,8 @@ class ScheduleService
     }
 
     /**
+     * Review list of available slots and see if any should be removed due to recent date or time overusage
+     *
      * @param GameToSchedule $game
      * @param ScheduledGame[] $slotsAvail
      * @param \DateTime[] $weekDatesInfo
@@ -405,6 +416,10 @@ class ScheduleService
     }
 
     /**
+     * Determine actual date of first day of a given week
+     *
+     * Assumes week numbers start at 1
+     *
      * @param $weekNr
      *
      * @return \DateTime[]
@@ -424,6 +439,15 @@ class ScheduleService
     }
 
     /**
+     * Look over past games and see if some available slots should be removed due to recent over use by day of week
+     *
+     * This method will review the past n weeks scheduled games and if those games have exceeded a specific limit
+     * for a single day of the week, then any open slots for that day of week will be removed from scheduling
+     * consideration
+     *
+     * @todo The value of n could be standard constant or a team-specific value
+     * 'past n weeks' - n is the value of a MAX_CONSECUTIVE_SAME_DAY constant
+     *
      * @param GameToSchedule $game
      * @param ScheduledGame[] $slotsAvail
      * @param \DateTime[] $weekDatesInfo
@@ -450,16 +474,16 @@ class ScheduleService
             $startDate,
             $weekDatesInfo['end']->format("Y-m-d")
         );
-        $dayOfWeekFilter['Visitor'] = $this->sameDayOfWeek($pastGames);
+        $dayOfWeekFilter['Away'] = $this->sameDayOfWeek($pastGames);
 
         if (!empty($dayOfWeekFilter['Home']) ||
-            !empty($dayOfWeekFilter['Visitor'])
+            !empty($dayOfWeekFilter['Away'])
         ) {
             $this->gameToScheduleService->mapGameToSchedule($game);
-            $dump = "TOO MANY CONSECUTIVE GAMES CHECK\n";
+            $dump = "OVERUSED DAY OF WEEK CHECK\n";
             $dump .= "Game details:\n" . $this->gameToScheduleService->dumpGameToSchedule($game);
-            if (!empty($dayOfWeekFilter['Visitor'])) {
-                $dump .= "Visitor conflict: " . $dayOfWeekFilter['Visitor'] . "\n";
+            if (!empty($dayOfWeekFilter['Away'])) {
+                $dump .= "Visitor conflict: " . $dayOfWeekFilter['Away'] . "\n";
             }
             if (!empty($dayOfWeekFilter['Home'])) {
                 $dump .= "Home conflict: " . $dayOfWeekFilter['Home'] . "\n";
@@ -473,6 +497,15 @@ class ScheduleService
     }
 
     /**
+     * Look over past games and see if some available slots should be removed due to recent over use of given time slot
+     *
+     * This method will review the past n weeks scheduled games and if those games have exceeded a specific limit
+     * for a single time slot, then any open slots for that time will be removed from scheduling
+     * consideration
+     *
+     * @todo The value of n could be standard constant or a team-specific value
+     * 'past n weeks' - n is the value of a MAX_CONSECUTIVE_SAME_TIME constant
+     *
      * @param GameToSchedule $game
      * @param ScheduledGame[] $slotsAvail
      * @param \DateTime[] $weekDatesInfo
@@ -481,10 +514,49 @@ class ScheduleService
      */
     private function reviewRecentTimes(GameToSchedule $game, array $slotsAvail, array $weekDatesInfo)
     {
+        // We need to move n weeks back, where n is the number of consecutive weeks
+        $startDate = date(
+            "Y-m-d",
+            strtotime($weekDatesInfo['start']->format("Y-m-d") . " " . self::MAX_CONSECUTIVE_SAME_TIME . "weeks ago")
+        );
+
+        $pastGames = $this->scheduledGameRepo->findPastGamesForTeamId(
+            $game->getHomeTeamId(),
+            $startDate,
+            $weekDatesInfo['end']->format("Y-m-d")
+        );
+        $timeSlotFilter['Home'] = $this->sameTimeSlot($pastGames);
+
+        $pastGames = $this->scheduledGameRepo->findPastGamesForTeamId(
+            $game->getVisitTeamId(),
+            $startDate,
+            $weekDatesInfo['end']->format("Y-m-d")
+        );
+        $timeSlotFilter['Away'] = $this->sameTimeSlot($pastGames);
+
+        if (!empty($timeSlotFilter['Home']) ||
+            !empty($timeSlotFilter['Away'])
+        ) {
+            $this->gameToScheduleService->mapGameToSchedule($game);
+            $dump = "OVERUSED TIME SLOT CHECK\n";
+            $dump .= "Game details:\n" . $this->gameToScheduleService->dumpGameToSchedule($game);
+            if (!empty($timeSlotFilter['Away'])) {
+                $dump .= "Visitor conflict: " . $timeSlotFilter['Away'] . "\n";
+            }
+            if (!empty($timeSlotFilter['Home'])) {
+                $dump .= "Home conflict: " . $timeSlotFilter['Home'] . "\n";
+            }
+            $this->logger->debug($dump);
+
+            $slotsAvail = $this->removeSlotsByTime($timeSlotFilter, $slotsAvail);
+        }
+
         return $slotsAvail;
     }
 
     /**
+     * Checks a range of provided dates to see if the Day of Week value exceeds a fixed limit
+     *
      * @param ScheduledGame[] $pastGames
      *
      * @return string
@@ -497,12 +569,6 @@ class ScheduleService
         $lastDate = null;
 
         foreach ($pastGames as $dateToCheck) {
-
-//            $this->logger->debug("DAY of WEEK check:\nDate: " .
-//                $dateToCheck->getGameDate()->format("Y-m-d") .
-//                "\nDay of Week: " . $dateToCheck->getGameDate()->format("D")
-//            );
-
             // If first time through, we set last date to the current date; this will force the
             // next check to pass (since we are comparing against the same date) so the streak will
             // increase to 1 which is fair game
@@ -523,6 +589,46 @@ class ScheduleService
     }
 
     /**
+     * Checks a range of provided dates to see if the time slot value exceeds a fixed limit
+     *
+     * @param ScheduledGame[] $pastGames
+     *
+     * @return string
+     */
+    private function sameTimeSlot(array $pastGames)
+    {
+        $timeSlotFilter = null;
+        $consecutiveStreak = 0;
+        $index = 1;
+        $lastTimeSlot = null;
+
+        foreach ($pastGames as $dateToCheck) {
+            // If first time through, we set last time slot to the current time slot; this will force the
+            // next check to pass (since we are comparing against the same time slot) so the streak will
+            // increase to 1 which is fair game
+            $lastTimeSlot = empty($lastTimeSlot) ? $dateToCheck->getGameTime()->format("H:i") : $lastTimeSlot;
+            if ($lastTimeSlot == $dateToCheck->getGameTime()->format("H:i")) {
+                $consecutiveStreak++;
+            } else {
+                $consecutiveStreak = 0;
+            }
+            $index++;
+        }
+
+        if ($consecutiveStreak >= self::MAX_CONSECUTIVE_SAME_TIME) {
+            $timeSlotFilter = $pastGames[0]->getGameTime()->format("H:i");
+        }
+
+        return $timeSlotFilter;
+    }
+
+    /**
+     * Remove from provided list of open slots, dates that match day of week values provided
+     *
+     * $dayOfWeekFilter contains 2 entries, one for each of the HOME and AWAY team. The value for each index may be
+     * blank if the consecutive limit hasn't been reached or the day of week value that will be used to remove
+     * appropriate open slots.
+     *
      * @param string[] $dayOfWeekFilter
      * @param ScheduledGame[] $slotsAvail
      *
@@ -540,8 +646,32 @@ class ScheduleService
             }
         }
 
-//        $this->logger->debug("Current Slots availble:\n" . print_r($slotsAvail, true));
-//        $this->logger->debug("Number of slots available: " . count($slotsAvail));
+        return $slotsAvail;
+    }
+
+    /**
+     * Remove from provided list of open slots, dates that match time values provided
+     *
+     * $timeSlotFilter contains 2 entries, one for each of the HOME and AWAY team. The value for each index may be
+     * blank if the consecutive limit hasn't been reached or the day of week value that will be used to remove
+     * appropriate open slots.
+     *
+     * @param string[]        $timeSlotFilter
+     * @param ScheduledGame[] $slotsAvail
+     *
+     * @return ScheduledGame[]
+     */
+    private function removeSlotsByTime(array $timeSlotFilter, array $slotsAvail)
+    {
+        foreach ($timeSlotFilter as $timeSlot) {
+            if (!empty($timeSlot)) {
+                foreach ($slotsAvail as $key => $openSlot) {
+                    if ($openSlot->getGameTime()->format("H:i") == $timeSlot) {
+                        array_splice($slotsAvail, $key, 1);
+                    }
+                }
+            }
+        }
 
         return $slotsAvail;
     }

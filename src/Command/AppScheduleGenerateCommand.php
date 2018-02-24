@@ -47,7 +47,7 @@ class AppScheduleGenerateCommand extends Command
     }
 
     /**
-     *
+     * Define acceptable options and switches
      */
     protected function configure()
     {
@@ -75,32 +75,38 @@ class AppScheduleGenerateCommand extends Command
     }
 
     /**
+     * Do the work required
+     *
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
-     * @return int|null|void
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @return void
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output) : void
     {
         $this->io = new SymfonyStyle($input, $output);
 
         $this->validateArguments($input->getOptions());
-        $this->scheduleService->generateSchedule(
+        $rc = $this->scheduleService->generateSchedule(
             $this->scheduleStartDate,
             $this->gameLengthInMins,
             $this->flowControl,
             $this->io
         );
 
-        $this->io->success("... a schedule has been successfully generated");
+        if ($rc) {
+            $this->io->success("... all games slotted into schedule");
+        } else {
+            $this->io->warning("... some games remain to be slotted into schedule");
+        }
     }
 
     /**
-     * @param $arguments
+     * Validate arguments against acceptable command line options and switches
+     *
+     * @param array $arguments
      */
-    private function validateArguments($arguments)
+    private function validateArguments(array $arguments)
     {
         foreach ($arguments as $argumentKey => $argumentValue) {
             switch ($argumentKey) {
