@@ -38,6 +38,20 @@ class TeamInformationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Truncate the table
+     */
+    public function truncate()
+    {
+        $sql = "SET FOREIGN_KEY_CHECKS=0;
+                TRUNCATE Team_Information;
+                SET FOREIGN_KEY_CHECKS=1;
+                ";
+        $dbConn = $this->getEntityManager()->getConnection();
+        $dbCmd = $dbConn->prepare($sql);
+        $dbCmd->execute();
+    }
+
+    /**
      * Get the count of teams in divisions
      *
      * @return array

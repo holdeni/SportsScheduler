@@ -1,16 +1,16 @@
 1,Braves,A
 2,ON Canadians,A
-3,Slime,A
+3,Slime,A,+Mon21:30,+Tue21:30,+Wed21:30
 4,Dawg Pound,A
-5,Willy's Pizza,A
+5,Willy's Pizza,A,+Wed18:30,+Wed20:00,+Wed21:30
 6,Instile Tile,A
 1,Tradebank Titans,C
-2,Edward Jones,C
-3,A&B Bandits,C
+2,Edward Jones,C,-Mon18:30
+3,A&B Bandits,C,-Mon21:30,-Tue21:30
 4,Kanata Decisive Krushers,C
-5,Longshots,C
+5,Longshots,C,-Mon21:30,-Wed21:30
 6,Prime Time,C
-7,AAA Kavtech,C
+7,AAA Kavtech,C,-Wed18:30
 8,Legends,C
 1,The Beer View Mirrors,B1
 2,Brew Crew,B1
@@ -19,7 +19,7 @@
 5,The Colts,B1
 6,Tony Graham Bears,B1
 1,Call Ups,B2
-2,Brown's Martial Arts,B2
+2,Brown's Martial Arts,B2,-Mon18:30,-Tue18:30,-Wed18:30
 3,KSC Sportsmen,B2
 4,RBC Lions,B2
 5,Mattawa,B2

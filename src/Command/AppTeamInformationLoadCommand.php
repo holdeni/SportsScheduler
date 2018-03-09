@@ -8,9 +8,14 @@ use App\Repository\TeamInformationRepository;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+/**
+ * Class AppTeamInformationLoadCommand
+ * @package App\Command
+ */
 class AppTeamInformationLoadCommand extends ContainerAwareCommand
 {
     protected static $defaultName = 'app:team-information:load';
@@ -27,12 +32,25 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
     /** @var TeamInformationRepository */
     protected $teamInformationRepo;
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    /** @var bool */
+    protected $truncateData = false;
+
+
+    /**
+     * AppTeamInformationLoadCommand constructor.
+     *
+     * @param TeamInformationRepository $teamInformationRepository
+     */
+    public function __construct(TeamInformationRepository $teamInformationRepository)
     {
-        $em  = $this->getContainer()->get('doctrine')->getManager();
-        $this->teamInformationRepo = $em->getRepository('App:TeamInformation');
+        parent::__construct();
+
+        $this->teamInformationRepo = $teamInformationRepository;
     }
 
+    /**
+     * Setup command line options and arguments
+     */
     protected function configure()
     {
         $this
@@ -42,15 +60,32 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
                 InputArgument::REQUIRED,
                 'CSV file containing team information'
             )
-        ;
+            ->addOption(
+                'truncate',
+                't',
+                InputOption::VALUE_NONE,
+                'Delete existing data from database'
+            );
     }
 
+    /**
+     * Mainline - Do what the command is supposed to perform
+     *
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     *
+     * @return void
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->io = new SymfonyStyle($input, $output);
-        $arguments['csvFile']   = $input->getArgument('csvFile');
+        $arguments = array_merge($input->getArguments(), $input->getOptions());
 
-        $this->validateArguments($arguments);
+        $this->processCommandLine($arguments);
+
+        if ($this->truncateData) {
+            $this->teamInformationRepo->truncate();
+        }
 
         $this->openCsvFile();
         $this->processCSVLoad();
@@ -59,7 +94,12 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
         $this->io->success('... team information has been successfully loaded');
     }
 
-    protected function validateArguments(array $arguments)
+    /**
+     * Process the switches/options provided on the command line
+     *
+     * @param array $arguments
+     */
+    protected function processCommandLine(array $arguments)
     {
         foreach ($arguments as $argumentKey => $argumentValue) {
             switch ($argumentKey) {
@@ -76,6 +116,13 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
                     $this->csvFilename = $argumentValue;
 
                     break;
+
+                case 'truncate':
+                    if (!empty($argumentValue)) {
+                        $this->io->warning("Existing team information will be deleted");
+                        $this->truncateData = true;
+                    }
+                    break;
             }
         }
 
@@ -85,6 +132,9 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
         }
     }
 
+    /**
+     * Open CSV file
+     */
     protected function openCsvFile()
     {
         $this->csvFileHandle = fopen($this->csvFilename, "r");
@@ -94,6 +144,9 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
 
     }
 
+    /**
+     * Close CSV file
+     */
     protected function closeCsvFile()
     {
         if ($this->csvFileHandle != null) {
@@ -101,6 +154,9 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
         }
     }
 
+    /**
+     * Loads information from CSV file into database
+     */
     protected function processCSVLoad()
     {
         $row = 0;
@@ -111,14 +167,27 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
              * @todo Should allow for a header row
              * @todo Should header row to reorder fields
              * @todo Use constants for the index values into $line
+             * @todo Validate each row for minimum compliance
              */
-
             $row++;
+            $teamNumInDiv = $line[0];
+            $teamName = $line[1];
+            $teamDivision = $line[2];
 
-            $gameLocation = new TeamInformation();
-            $gameLocation->setTeamNumInDiv($line[0])
-                ->setTeamName($line[1])
-                ->setTeamDivision($line[2]);
+            $preferences = array();
+            for ($i=3; $i < count($line); $i++) {
+                $preferences[] = $line[$i];
+            }
+
+            $gameLocation = new TeamInformation(
+                $teamNumInDiv,
+                $teamName,
+                $teamDivision
+            );
+            if (!empty($preferences)) {
+                $gameLocation->setPreferences($preferences);
+            }
+
             $this->teamInformationRepo->save($gameLocation);
             unset($gameLocation);
 
@@ -129,5 +198,4 @@ class AppTeamInformationLoadCommand extends ContainerAwareCommand
 
         $this->io->text("... completed reading in " . $row . " team records");
     }
-
 }

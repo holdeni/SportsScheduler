@@ -34,7 +34,7 @@ class TeamInformation
      *     name="Team_Division",
      *     type="string",
      *     length=3,
-     *     nullable=false,
+     *     nullable=false
      * )
      */
     private $teamDivision;
@@ -44,7 +44,7 @@ class TeamInformation
      *     name="Team_Name",
      *     type="string",
      *     length=32,
-     *     nullable=false,
+     *     nullable=false
      * )
      */
     private $teamName;
@@ -62,9 +62,38 @@ class TeamInformation
     private $teamNumInDiv;
 
     /**
+     * @ORM\Column(
+     *     name="Preferences",
+     *     type="json",
+     *     nullable=true,
+     *     options={
+     *         "default" = null
+     *     }
+     * )
+     */
+    private $preferences;
+
+    /**
+     * TeamInformation constructor.
+     *
+     * @param int    $teamNumInDiv
+     * @param string $teamName
+     * @param string $teamDivision
+     */
+    public function __construct(
+        int $teamNumInDiv,
+        string $teamName,
+        string $teamDivision
+    ) {
+        $this->teamNumInDiv = $teamNumInDiv;
+        $this->teamName = $teamName;
+        $this->teamDivision = $teamDivision;
+    }
+
+    /**
      * @return int
      */
-    public function getTeamInformationId()
+    public function getTeamInformationId() : int
     {
         return $this->teamInformationId;
     }
@@ -74,7 +103,7 @@ class TeamInformation
      *
      * @return TeamInformation
      */
-    public function setTeamInformationId(int $teamInformationId)
+    public function setTeamInformationId(int $teamInformationId) : TeamInformation
     {
         $this->teamInformationId = $teamInformationId;
 
@@ -84,59 +113,43 @@ class TeamInformation
     /**
      * @return string
      */
-    public function getTeamDivision()
+    public function getTeamDivision() : string
     {
         return $this->teamDivision;
     }
 
     /**
-     * @param string $teamDivision
-     *
-     * @return TeamInformation
-     */
-    public function setTeamDivision(string $teamDivision)
-    {
-        $this->teamDivision = $teamDivision;
-
-        return $this;
-    }
-
-    /**
      * @return string
      */
-    public function getTeamName()
+    public function getTeamName() : string
     {
         return $this->teamName;
     }
 
     /**
-     * @param string $teamName
-     *
-     * @return TeamInformation
-     */
-    public function setTeamName(string $teamName)
-    {
-        $this->teamName = $teamName;
-
-        return $this;
-    }
-
-    /**
      * @return int
      */
-    public function getTeamNumInDiv()
+    public function getTeamNumInDiv() : int
     {
         return $this->teamNumInDiv;
     }
 
     /**
-     * @param int $teamNumInDiv
+     * @return array
+     */
+    public function getPreferences() : array
+    {
+        return $this->preferences;
+    }
+
+    /**
+     * @param array $preferences
      *
      * @return TeamInformation
      */
-    public function setTeamNumInDiv(int $teamNumInDiv)
+    public function setPreferences(array $preferences) : TeamInformation
     {
-        $this->teamNumInDiv = $teamNumInDiv;
+        $this->preferences = $preferences;
 
         return $this;
     }
