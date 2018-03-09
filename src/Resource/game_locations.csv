@@ -1,5 +1,8 @@
-North,Mon,18:30,23:00
-North,Tue,18:30,23:00
-South,Tue,18:30,23:00
-North,Wed,18:30,23:00
-South,Wed,6:30pm,23:00
+ADD,North,Mon,18:30,23:00
+ADD,North,Tue,18:30,23:00
+ADD,South,Tue,18:30,23:00
+ADD,North,Wed,18:30,23:00
+ADD,South,Wed,6:30pm,23:00
+DELETE,North,2018-05-21,18:30,23:00
+DELETE,North,2018-07-02,18:30,23:00
+DELETE,North,2018-08-06,18:30,23:00

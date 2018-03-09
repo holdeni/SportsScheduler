@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\GameLocation;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -37,6 +38,20 @@ class GameLocationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Truncate the table
+     */
+    public function truncate()
+    {
+        $sql = "SET FOREIGN_KEY_CHECKS=0;
+                TRUNCATE Game_Location;
+                SET FOREIGN_KEY_CHECKS=1;
+                ";
+        $dbConn = $this->getEntityManager()->getConnection();
+        $dbCmd = $dbConn->prepare($sql);
+        $dbCmd->execute();
+    }
+
+    /**
      * Get game locations allocated to specified day of week
      *
      * @param string $dayOfWeek
@@ -49,13 +64,34 @@ class GameLocationRepository extends ServiceEntityRepository
         $sql = "SELECT gl
                 FROM App:GameLocation gl
                 WHERE gl.dayOfWeek = :dayOfWeek
+                  AND gl.action = :addAction
                ";
         $dbData = $em->createQuery($sql)
             ->setParameters(array(
                 'dayOfWeek' => $dayOfWeek,
+                'addAction' => 'ADD'
             ))
             ->getResult();
 
         return($dbData);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function fetchSkippedDates()
+    {
+        $sql = "SELECT gl.dayOfWeek
+                FROM App:GameLocation gl
+                WHERE gl.action = :deleteAction
+               ";
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->setParameters(array(
+                'deleteAction' => 'DELETE'
+            ))
+            ->getResult(Query::HYDRATE_ARRAY);
+
+        return $dbData;
     }
 }

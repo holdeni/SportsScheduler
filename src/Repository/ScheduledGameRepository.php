@@ -181,4 +181,23 @@ class ScheduledGameRepository extends ServiceEntityRepository
 
         return (int) $dbData;
     }
+
+    /**
+     * Delete all games on the given game date
+     *
+     * @param string $gameDate
+     */
+    public function deleteSlotsForDate(string $gameDate)
+    {
+        $sql = "DELETE
+                FROM App:ScheduledGame sg
+                WHERE sg.gameDate = :gameDate
+               ";
+
+        $this->getEntityManager()
+            ->createQuery($sql)
+            ->execute(array(
+                'gameDate' => $gameDate
+            ));
+    }
 }

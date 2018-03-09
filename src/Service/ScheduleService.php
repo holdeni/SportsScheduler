@@ -135,6 +135,7 @@ class ScheduleService
              * Using default game location information, build the set of game slots that can be used
              */
              $this->createTimeSlots();
+             $this->deleteSkippedTimeSlots();
         }
 
         // Do the heavy lifting now - generate that dang schedule from all the pieces we have
@@ -239,6 +240,19 @@ class ScheduleService
             // Destroy the date counters for the current week, as we will build new ones for the next week
             unset($daysToShift);
             unset($dateToSchedule);
+        }
+    }
+
+    /**
+     * Process deletion of timeslots created on dates we are to skip
+     *
+     * @todo This function should also respect the times on the skipped days so you can remove just some slots.
+     */
+    private function deleteSkippedTimeSlots()
+    {
+        $dbData = $this->gameLocationRepo->fetchSkippedDates();
+        foreach ($dbData as $gameDateToDelete) {
+            $this->scheduledGameRepo->deleteSlotsForDate($gameDateToDelete['dayOfWeek']);
         }
     }
 

@@ -31,6 +31,16 @@ class GameLocation
 
     /**
      * @ORM\Column(
+     *     name="Action",
+     *     type="string",
+     *     length=8,
+     *     nullable=false,
+     * )
+     */
+    private $action;
+
+    /**
+     * @ORM\Column(
      *     name="Day_Of_Week",
      *     type="string",
      *     length=12,
@@ -42,7 +52,7 @@ class GameLocation
     /**
      * @ORM\Column(
      *     name="End_Available",
-     *     type="datetime",
+     *     type="datetime_immutable",
      *     nullable=false,
      * )
      */
@@ -50,27 +60,50 @@ class GameLocation
 
     /**
      * @ORM\Column(
-     *     name="GameLocation_Name",
+     *     name="Game_Location_Name",
      *     type="string",
      *     length=255,
      *     nullable=false,
      * )
      */
-    private $GameLocationName;
+    private $gameLocationName;
 
     /**
      * @ORM\Column(
      *     name="Start_Available",
-     *     type="datetime",
+     *     type="datetime_immutable",
      *     nullable=false,
      * )
      */
     private $startAvailable;
 
     /**
+     * GameLocation constructor.
+     *
+     * @param string             $gameLocationName
+     * @param string             $dayOfWeek
+     * @param \DateTimeImmutable $startAvailable
+     * @param \DateTimeImmutable $endAvailable
+     * @param string             $action
+     */
+    public function __construct(
+        string $gameLocationName,
+        string $dayOfWeek,
+        \DateTimeImmutable $startAvailable,
+        \DateTimeImmutable $endAvailable,
+        string $action
+    ) {
+        $this->gameLocationName = $gameLocationName;
+        $this->dayOfWeek = $dayOfWeek;
+        $this->startAvailable = $startAvailable;
+        $this->endAvailable = $endAvailable;
+        $this->action = $action;
+    }
+
+    /**
      * @return int
      */
-    public function getGameLocationeId()
+    public function getGameLocationeId() : int
     {
         return $this->gameLocationId;
     }
@@ -80,7 +113,7 @@ class GameLocation
      *
      * @return GameLocation
      */
-    public function setGameLocationeId(int $gameLocationId)
+    public function setGameLocationeId(int $gameLocationId) : GameLocation
     {
         $this->gameLocationId = $gameLocationId;
 
@@ -90,80 +123,40 @@ class GameLocation
     /**
      * @return string
      */
-    public function getDayOfWeek()
+    public function getAction() : string
     {
-        return $this->dayOfWeek;
-    }
-
-    /**
-     * @param string $dayOfWeek
-     *
-     * @return GameLocation
-     */
-    public function setDayOfWeek(string $dayOfWeek)
-    {
-        $this->dayOfWeek = $dayOfWeek;
-
-        return $this;
-    }
-
-    /**
-     * @return \DateTime
-     */
-    public function getEndAvailable()
-    {
-        return $this->endAvailable;
-    }
-
-    /**
-     * @param \DateTime $endAvailable
-     *
-     * @return GameLocation
-     */
-    public function setEndAvailable(\DateTime $endAvailable)
-    {
-        $this->endAvailable = $endAvailable;
-
-        return $this;
+        return $this->action;
     }
 
     /**
      * @return string
      */
-    public function getGameLocationName()
+    public function getDayOfWeek() : string
     {
-        return $this->GameLocationName;
+        return $this->dayOfWeek;
     }
 
     /**
-     * @param string $GameLocationName
-     *
-     * @return GameLocation
+     * @return \DateTimeImmutable
      */
-    public function setGameLocationName(string $GameLocationName)
+    public function getEndAvailable() : \DateTimeImmutable
     {
-        $this->GameLocationName = $GameLocationName;
-
-        return $this;
+        return $this->endAvailable;
     }
 
     /**
-     * @return \DateTime
+     * @return string
      */
-    public function getStartAvailable()
+    public function getGameLocationName() : string
+    {
+        return $this->gameLocationName;
+    }
+
+    /**
+     * @return \DateTimeImmutable
+     */
+    public function getStartAvailable() : \DateTimeImmutable
     {
         return $this->startAvailable;
-    }
-
-    /**
-     * @param \DateTime $startAvailable
-     *
-     * @return GameLocation
-     */
-    public function setStartAvailable(\DateTime $startAvailable)
-    {
-        $this->startAvailable = $startAvailable;
-
-        return $this;
     }
 }
