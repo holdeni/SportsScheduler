@@ -329,6 +329,9 @@ class ScheduleService
                 $this->io->text("            processing Division " . $division);
                 $this->scheduleDivisionGamesInWeek($division, $weekNr, $weekDatesInfo);
             }
+
+            // Shuffle divisions up in the order for next week (top goes to the bottom)
+            $divisionList = $this->reorderDivisionOrder($divisionList);
         }
     }
 
@@ -359,6 +362,24 @@ class ScheduleService
         $this->io->text($message . $subMessage);
 
         return $divisionList;
+    }
+
+    /**
+     * Move order of divisions up one, with top being bumped to the bottom
+     *
+     * @param string[] $divisionList
+     *
+     * @return string[]
+     */
+    private function reorderDivisionOrder(array $divisionList) : array
+    {
+        $newDivisionList = array();
+        for ($i = 1; $i < count($divisionList); $i++) {
+            $newDivisionList[] = $divisionList[$i];
+        }
+        $newDivisionList[] = $divisionList[0];
+
+        return $newDivisionList;
     }
 
     /**
