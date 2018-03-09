@@ -13,12 +13,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Class AppDefaultLocationsLoadCommand
+ * Class AppGameLocationsLoadCommand
  * @package App\Command
  */
-class AppDefaultLocationsLoadCommand extends ContainerAwareCommand
+class AppGameLocationsLoadCommand extends ContainerAwareCommand
 {
-    protected static $defaultName = 'app:default-locations:load';
+    protected static $defaultName = 'app:game-locations:load';
 
     /** @var SymfonyStyle */
     protected $io;
@@ -55,7 +55,7 @@ class AppDefaultLocationsLoadCommand extends ContainerAwareCommand
 
 
     /**
-     * AppDefaultLocationsLoadCommand constructor.
+     * AppGameLocationsLoadCommand constructor.
      *
      * @param GameLocationRepository $gameLocationRepository
      */
@@ -101,7 +101,7 @@ class AppDefaultLocationsLoadCommand extends ContainerAwareCommand
 
         $arguments = array_merge($input->getArguments(), $input->getOptions());
 
-        $this->validateArguments($arguments);
+        $this->processCommandLine($arguments);
 
         if ($this->truncateData) {
             $this->gameLocationRepo->truncate();
@@ -115,11 +115,11 @@ class AppDefaultLocationsLoadCommand extends ContainerAwareCommand
     }
 
     /**
-     * Validate the switches/options provided on the command line
+     * Process the switches/options provided on the command line
      *
      * @param array $arguments
      */
-    protected function validateArguments(array $arguments)
+    protected function processCommandLine(array $arguments)
     {
         foreach ($arguments as $argumentKey => $argumentValue) {
             switch ($argumentKey) {
@@ -139,7 +139,7 @@ class AppDefaultLocationsLoadCommand extends ContainerAwareCommand
 
                 case 'truncate':
                     if (!empty($argumentValue)) {
-                        $this->io->warning("Existing data for Game Location will be deleted");
+                        $this->io->warning("Existing game location information will be deleted");
                         $this->truncateData = true;
                     }
                     break;
