@@ -33,30 +33,30 @@
                     {% set daysInMonth = time|date('t') %}
                     {% set startDow = time|date('F 1\\s\\t Y')|date('w') %}
                     {% set dow = startDow %}
-                    {% for day in range(1,daysInMonth) %}
-                    {% if loop.first and startDow != 0 %}
-                        <td colspan="{{ startDow }}"></td>
-                    {% endif %}
-                    <td>
-                        <div>
-                            <div><span class="font-weight-bold">{{ day }}</span></div>
-                            <div class="day">
-                                {% if gamesInMonth[day] is defined %}
-                                    {% include "schedule/calendar_day.html.twig" %}
-                                {% endif %}
+                    {% for day in range(1, daysInMonth) %}
+                        {% if loop.first and startDow != 0 %}
+                            <td colspan="{{ startDow }}"></td>
+                        {% endif %}
+                        <td>
+                            <div>
+                                <div><span class="font-weight-bold">{{ day }}</span></div>
+                                <div class="day">
+                                    {% if gamesInMonth[day] is defined %}
+                                        {% include "schedule/calendar_day.html.twig" %}
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    {% if loop.last and dow != 6 %}
-                        <td colspan="{{ 6 - dow }}">&nbsp;</td>
-                    {% endif %}
-                    {% if dow == 6 %}
-                    {% set dow = 0 %}
-                </tr>
-                <tr>
-                    {% else %}
-                        {% set dow = dow + 1 %}
-                    {% endif %}
+                        </td>
+                        {% if loop.last and dow != 6 %}
+                            <td colspan="{{ 6 - dow }}">&nbsp;</td>
+                        {% endif %}
+                        {% if dow == 6 %}
+                            {% set dow = 0 %}
+                            </tr>
+                            <tr>
+                        {% else %}
+                            {% set dow = dow + 1 %}
+                        {% endif %}
                     {% endfor %}
                 </tr>
                 </tbody>
