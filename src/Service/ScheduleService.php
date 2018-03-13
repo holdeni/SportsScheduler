@@ -23,8 +23,16 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ScheduleService
 {
+    // Number of consecutive games allowed on same day of week
     const MAX_CONSECUTIVE_SAME_DAY = 3;
+
+    // Number of consecutive games allowed at same time
     const MAX_CONSECUTIVE_SAME_TIME = 3;
+
+    // Chance that a slot will not be removed from consideration
+    // This is used for team preference slot removals to determine when a slot will be kept instead of removed
+    // Meant to represent percentage chance of 100 that slot will not be deleted
+    const SLOT_PRESERVATION_LIMIT = 25;
 
     /** @var DefaultScheduleRepository */
     protected $defaultScheduleRepo;
@@ -65,6 +73,9 @@ class ScheduleService
 
     /** @var SymfonyStyle */
     protected $io;
+
+    /** @var string */
+    protected $collectedSchedulingNotes;
 
     /**
      * ScheduleService constructor.
@@ -318,7 +329,6 @@ class ScheduleService
 
         // Get the list of team divisions, so we can generate a random order to process each week of the schedule
         $divisionList = $this->teamInformationRepo->getListOfTeamDivisions();
-        $this->logger->debug("DIVISION LIST:\n" . print_r($divisionList, true));
 
         $divisionList = $this->createRandomDivisionOrder($divisionList);
         $this->io->text("--- Looping through the games to be scheduled and finding time slots");
@@ -398,6 +408,7 @@ class ScheduleService
         }
 
         foreach ($gamesToSchedule as $game) {
+            $this->collectedSchedulingNotes = '';
             $slotsAvail = $this->scheduledGameRepo->findAvailSlots($weekDatesInfo['start'], $weekDatesInfo['end']);
             $slotsAvail = $this->filterAvailSlots($game, $slotsAvail, $weekDatesInfo);
             $gameIsScheduled = $this->assignSlot($game, $slotsAvail);
@@ -418,8 +429,33 @@ class ScheduleService
      */
     private function filterAvailSlots(GameToSchedule $game, array $slotsAvail, array $weekDatesInfo)
     {
-        $slotsAvail = $this->reviewRecentDays($game, $slotsAvail, $weekDatesInfo);
-        $slotsAvail = $this->reviewRecentTimes($game, $slotsAvail, $weekDatesInfo);
+        $this->collectGameSchedulingNotes(
+            "Number of available slots to begin with: " . count($slotsAvail)
+        );
+
+        // Perform team specific checks, if there is at least more than 1 slot under consideration
+        if (count($slotsAvail) > 1) {
+            $slotsAvail = $this->reviewTeamPreferences($game, $slotsAvail);
+            $this->collectGameSchedulingNotes(
+                "Number of available slots to after processing team preferences : " . count($slotsAvail)
+            );
+        }
+
+        // Perform standard checks that all teams benefit from - as long as there is more than 1 slot still under
+        // consideration
+        if (count($slotsAvail) > 1) {
+            $slotsAvail = $this->reviewRecentDays($game, $slotsAvail, $weekDatesInfo);
+            $this->collectGameSchedulingNotes(
+                "Number of available slots after consecutive day review: " . count($slotsAvail)
+            );
+        }
+
+        if (count($slotsAvail) > 1) {
+            $slotsAvail = $this->reviewRecentTimes($game, $slotsAvail, $weekDatesInfo);
+            $this->collectGameSchedulingNotes(
+                "Number of available slots after consecutive time slot review: " . count($slotsAvail)
+            );
+        }
 
         return $slotsAvail;
     }
@@ -444,7 +480,8 @@ class ScheduleService
             ->setDivision($game->getDivision())
             ->setVisitTeamId($game->getVisitTeamId())
             ->setHomeTeamId($game->getHomeTeamId())
-            ->setTemplateScheduleWeekNumber($game->getWeekNr());
+            ->setTemplateScheduleWeekNumber($game->getWeekNr())
+            ->setSchedulingNotes($this->collectedSchedulingNotes);
         $this->scheduledGameRepo->save($slotsAvail[$slotToUse]);
 
         return true;
@@ -523,7 +560,7 @@ class ScheduleService
             if (!empty($dayOfWeekFilter['Home'])) {
                 $dump .= "Home conflict: " . $dayOfWeekFilter['Home'] . "\n";
             }
-            $this->logger->debug($dump);
+            $this->collectGameSchedulingNotes($dump);
 
             $slotsAvail = $this->removeSlotsByDay($dayOfWeekFilter, $slotsAvail);
         }
@@ -581,7 +618,7 @@ class ScheduleService
             if (!empty($timeSlotFilter['Home'])) {
                 $dump .= "Home conflict: " . $timeSlotFilter['Home'] . "\n";
             }
-            $this->logger->debug($dump);
+            $this->collectGameSchedulingNotes($dump);
 
             $slotsAvail = $this->removeSlotsByTime($timeSlotFilter, $slotsAvail);
         }
@@ -671,11 +708,12 @@ class ScheduleService
      */
     private function removeSlotsByDay(array $dayOfWeekFilter, array $slotsAvail)
     {
+        $indicesToDelete = array();
         foreach ($dayOfWeekFilter as $dayOfWeek) {
             if (!empty($dayOfWeek)) {
                 foreach ($slotsAvail as $key => $openSlot) {
                     if ($openSlot->getGameDate()->format("D") == $dayOfWeek) {
-                        array_splice($slotsAvail, $key, 1);
+                        $indicesToDelete[] = $key;
                     }
                 }
             }
@@ -698,16 +736,150 @@ class ScheduleService
      */
     private function removeSlotsByTime(array $timeSlotFilter, array $slotsAvail)
     {
+        $indicesToDelete = array();
         foreach ($timeSlotFilter as $timeSlot) {
             if (!empty($timeSlot)) {
                 foreach ($slotsAvail as $key => $openSlot) {
                     if ($openSlot->getGameTime()->format("H:i") == $timeSlot) {
-                        array_splice($slotsAvail, $key, 1);
+                        $indicesToDelete[] = $key;;
                     }
                 }
             }
         }
 
         return $slotsAvail;
+    }
+
+    /**
+     * @param ScheduledGame[]  $slotsAvail
+     * @param string $dayOfWeek
+     * @param string $timeSlot
+     *
+     * @return array
+     */
+    private function removeSlotsByDayAndTime(array $slotsAvail, string $dayOfWeek, string $timeSlot)
+    {
+        $indicesToDelete = array();
+        foreach ($slotsAvail as $key => $openSlot) {
+            if ($openSlot->getGameDate()->format("D") == $dayOfWeek &&
+                $openSlot->getGameTime()->format("H:i") == $timeSlot
+            ) {
+                $indicesToDelete[] = $key;
+            }
+        }
+
+        return $this->updateAvailableSlots(
+            $slotsAvail,
+            $indicesToDelete,
+            self::SLOT_PRESERVATION_LIMIT
+        );
+    }
+
+    /**
+     * Delete a set of indices from an array
+     *
+     * The order we process the indices to delete is in reverse so that the index of the elements
+     * we wish to get rid of won't change as we remove them
+     *
+     * @param ScheduledGame[] $slotsAvail
+     * @param array $indicesToDelete
+     * @param int $chanceOfSlotPreservation
+     *
+     * @return array
+     */
+    private function updateAvailableSlots(
+        array $slotsAvail,
+        array $indicesToDelete,
+        int $chanceOfSlotPreservation = 100
+    ) {
+
+        if (empty($indicesToDelete)) {
+            return $slotsAvail;
+        }
+
+        foreach (array_reverse($indicesToDelete) as $key) {
+            $randomFactor = random_int(1, 100);
+            if ($randomFactor > $chanceOfSlotPreservation) {
+                $this->collectGameSchedulingNotes(
+                    "Removing [" . $chanceOfSlotPreservation . "]: " . $slotsAvail[$key]->getSlotSummary()
+                );
+                array_splice($slotsAvail, $key, 1);
+            } else {
+                $this->collectGameSchedulingNotes(
+                    "Preserved (" . $randomFactor . "): " . $slotsAvail[$key]->getSlotSummary()
+                );
+            }
+        }
+
+        return $slotsAvail;
+    }
+
+    /**
+     * Review team preferences for both teams involved in current game
+     *
+     * @param GameToSchedule $game
+     * @param array          $slotsAvail
+     *
+     * @return array
+     */
+    private function reviewTeamPreferences(GameToSchedule $game, array $slotsAvail)
+    {
+        $homeTeamPreferences = $this->teamInformationRepo->getTeamPreferences($game->getHomeTeamId());
+        if (!empty($homeTeamPreferences[0]['preferences'])) {
+            $slotsAvail = $this->processTeamPreferencesAgainstSlotsAvail(
+                $slotsAvail,
+                $homeTeamPreferences[0]['preferences']
+            );
+        }
+
+        if (count($slotsAvail) > 1) {
+            $awayTeamPreferences = $this->teamInformationRepo->getTeamPreferences($game->getVisitTeamId());
+            if (!empty($awayTeamPreferences[0]['preferences'])) {
+                $slotsAvail = $this->processTeamPreferencesAgainstSlotsAvail(
+                    $slotsAvail,
+                    $awayTeamPreferences[0]['preferences']
+                );
+            }
+        }
+
+        return $slotsAvail;
+    }
+
+    /**
+     * Process team preferences to see which currently available slots should be removed from consideration
+     *
+     * @param array          $slotsAvail
+     * @param array          $preferences
+     *
+     * @return array
+     */
+    private function processTeamPreferencesAgainstSlotsAvail(
+        array $slotsAvail,
+        array $preferences
+    ) {
+        foreach ($preferences as $preference) {
+            $action = substr($preference, 0, 1);
+            $dayOfWeek = substr($preference, 1, 3);
+            $timeSlot = substr($preference, 4, 5);
+
+            switch ($action) {
+                case '-':
+                    $this->collectGameSchedulingNotes("Processing MIN preference: " . $dayOfWeek . " @ " . $timeSlot);
+                    $slotsAvail = $this->removeSlotsByDayAndTime($slotsAvail, $dayOfWeek, $timeSlot);
+                    break;
+            }
+        }
+
+        return $slotsAvail;
+    }
+
+    /**
+     * Update record of decisions for scheduling current game
+     *
+     * @param string $note
+     */
+    private function collectGameSchedulingNotes(string $note)
+    {
+        $this->collectedSchedulingNotes .= $note . "\n";
     }
 }

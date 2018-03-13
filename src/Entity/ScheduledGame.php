@@ -420,5 +420,14 @@ class ScheduledGame
         return $this;
     }
 
+    /**
+     * @return string
+     */
+    public function getSlotSummary()
+    {
+        $info = $this->getGameLocation() . " - ";
+        $info .= $this->getGameDate()->format("D") . ", " . $this->getGameTime()->format("H:i");
+        return $info;
+    }
 
 }

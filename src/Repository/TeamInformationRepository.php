@@ -165,4 +165,25 @@ class TeamInformationRepository extends ServiceEntityRepository
 
         return $teamName;
     }
+
+    /**
+     * @param int $teamId
+     *
+     * @return string[]
+     */
+    public function getTeamPreferences(int $teamId)
+    {
+        $sql = "SELECT ti.preferences
+                FROM App:TeamInformation ti
+                WHERE ti.teamInformationId = :teamId
+               ";
+        $preferences = $this->getEntityManager()
+            ->createQuery($sql)
+            ->setParameters(array(
+                'teamId' => $teamId,
+            ))
+            ->getResult(Query::HYDRATE_ARRAY);
+
+        return $preferences;
+    }
 }
