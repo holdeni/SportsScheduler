@@ -1,7 +1,10 @@
 <?php
 namespace App\Service;
 
-
+/**
+ * Class DateUtilityService
+ * @package App\Service
+ */
 class DateUtilityService
 {
     /** @var array */
@@ -84,5 +87,31 @@ class DateUtilityService
             "Name " . $dayOfWeekName . " not found in " . __METHOD__,
             500
         );
+    }
+
+    /**
+     * @param mixed  $initValue
+     * @param string $type
+     *
+     * @return array
+     */
+    public function createDowArray($initValue, string $type = 'short')
+    {
+
+        if ($type != 'short' &&
+            $type != 'long'
+        ) {
+            throw new \InvalidArgumentException(
+                "Type " . $type . " invalid value in " . __METHOD__,
+                500
+            );
+        }
+
+        $dowArray = array();
+        foreach ($this->dayOfWeekMap as $dow) {
+            $dowArray[$dow[$type]] = $initValue;
+        }
+
+        return $dowArray;
     }
 }

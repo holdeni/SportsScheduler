@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\ScheduledGame;
 
+use App\Service\DateUtilityService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
@@ -15,14 +16,23 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ScheduledGameRepository extends ServiceEntityRepository
 {
+    /** @var DateUtilityService  */
+    private $dateUtilityService;
+
     /**
      * ScheduledGameRepository constructor.
      *
-     * @param RegistryInterface $registry
+     * @param RegistryInterface  $registry
+     * @param DateUtilityService $dateUtilityService
      */
-    public function __construct(RegistryInterface $registry)
+    public function __construct(
+        RegistryInterface $registry,
+        DateUtilityService $dateUtilityService
+    )
     {
         parent::__construct($registry, ScheduledGame::class);
+
+        $this->dateUtilityService = $dateUtilityService;
     }
 
     /**
@@ -121,7 +131,7 @@ class ScheduledGameRepository extends ServiceEntityRepository
      *
      * @return ScheduledGame[]
      */
-    public function listAllScheduledGame($teamId = 0)
+    public function listAllScheduledGames($teamId = 0)
     {
         $where = '';
         if ($teamId > 0) {
@@ -199,5 +209,23 @@ class ScheduledGameRepository extends ServiceEntityRepository
             ->execute(array(
                 'gameDate' => $gameDate
             ));
+    }
+
+    /**
+     * Get a breakdown of how many games a team has played for each day of the week
+     * @param int $teamId
+     *
+     * @return mixed
+     */
+    public function getDayOfWeekBreakdownForTeam(int $teamId)
+    {
+        $dbData = $this->listAllScheduledGames($teamId);
+
+        $dowBreakdown = $this->dateUtilityService->createDowArray(0, 'short');
+        foreach ($dbData as $game) {
+            $dowBreakdown[$game->getGameDate()->format("D")]++;
+        }
+
+        return $dowBreakdown;
     }
 }

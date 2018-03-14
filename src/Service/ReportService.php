@@ -121,7 +121,7 @@ class ReportService
             $teamList = $this->teamInformationRepo->getListOfTeamsInDivision($division);
 
             foreach ($teamList as $team) {
-                $teamGames = $this->scheduledGameRepo->listAllScheduledGame($team->getTeamInformationId());
+                $teamGames = $this->scheduledGameRepo->listAllScheduledGames($team->getTeamInformationId());
                 $reportData['data'][$division][$team->getTeamName()] =
                     $this->reviewTeamScheduleForNightsAndTimes($teamGames);
             }

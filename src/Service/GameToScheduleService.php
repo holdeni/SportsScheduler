@@ -49,6 +49,12 @@ class GameToScheduleService
      */
     public function dumpGameToSchedule(GameToSchedule $game)
     {
+        if (empty($game->getHomeTeamName()) ||
+            empty($game->getVisitTeamName())
+        ) {
+            $this->mapGameToSchedule($game);
+        }
+
         $dump = "Game Id: " . $game->getGameToScheduleId() . "\n";
         $dump .= "Week: " . $game->getWeekNr() . "\n";
         $dump .= "Teams: " . $game->getVisitTeamName() . " [" . $game->getVisitTeamId() . "]";

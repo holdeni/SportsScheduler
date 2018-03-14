@@ -102,7 +102,7 @@ class ScheduledGameService
     {
         $scheduledGamesDump = array();
 
-        $scheduledGames = $this->scheduledGameRepo->listAllScheduledGame();
+        $scheduledGames = $this->scheduledGameRepo->listAllScheduledGames();
         foreach ($scheduledGames as $game) {
             $this->mapScheduledGame($game);
             $month = $game->getGameDate()->format("M");

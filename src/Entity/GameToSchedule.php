@@ -97,10 +97,10 @@ class GameToSchedule
     private $weekNr;
 
     /** @var string */
-    private $homeTeamName;
+    private $homeTeamName = '';
 
     /** @var string */
-    private $visitTeamName;
+    private $visitTeamName = '';
 
     /**
      * @return int
@@ -261,6 +261,4 @@ class GameToSchedule
 
         return $this;
     }
-
-
 }

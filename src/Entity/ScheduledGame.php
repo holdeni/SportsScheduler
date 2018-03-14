@@ -429,5 +429,4 @@ class ScheduledGame
         $info .= $this->getGameDate()->format("D") . ", " . $this->getGameTime()->format("H:i");
         return $info;
     }
-
 }
