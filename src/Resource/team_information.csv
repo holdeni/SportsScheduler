@@ -1,25 +1,25 @@
-1,Braves,A
-2,ON Canadians,A
+1,Braves,A,-Mon18:30,-Tue18:30,-Tue20:00,-Wed18:30
+2,ON Canadians,A,-Mon21:30,-Tue21:30
 3,Slime,A
-4,Dawg Pound,A
-5,The Beer View Mirrors,A
-6,Brew Crew,A
-1,The Hurley's Bandits,B1
-2,Go Dean Express,B1
+4,Dawg Pound,A,-Tue18:30,-Tue20:00,-Tue21:30
+5,The Beer View Mirrors,A,-Mon18:30,-Tue18:30,-Wed18:30
+6,Brew Crew,A,-Mon18:30,-Mon20:00,-Mon21:30,-Tue18:30,-Tue20:00
+1,The Hurley's Bandits,B1,-Mon21:30,-Wed:21:30
+2,Go Dean Express,B1,-Mon18:30,-Mon20:00,-Tue18:30,-Tue20:00
 3,The Colts,B1
-4,Tony Graham Bears,B1
-5,Willy's Pizza,B1
-6,Instile Tile,B1
-1,Brown's Martial Arts,B2
-2,KSC Sportsmen,B2
+4,Tony Graham Bears,B1,-Mon21:30,-Tue21:30
+5,Willy's Pizza,B1,-Mon18:30,-Mon20:00,-Mon21:30
+6,Instile Tile,B1,-Wed18:30,-Wed20:00
+1,Brown's Martial Arts,B2,-Mon21:30,-Wed21:30
+2,KSC Sportsmen,B2,-Mon18:30,-Tue18:30,-Wed18:30
 3,RBC Lions,B2
-4,Mattawa,B2
+4,Mattawa,B2,-Mon18:30,-Mon20:00,-Mon21:30,-Tue21:30
 5,Tradebank Titans,B2
-6,Scott's New Team,B2
-1,Edward Jones,C
-2,A&B Bandits,C
-3,Kanata Decisive Krushers,C
-4,Longshots,C
+6,Scott's New Team,B2,-Mon18:30,-Mon20:00
+1,Edward Jones,C,-Mon18:30,-Tue18:30,-Wed18:30
+2,A&B Bandits,C,-Mon21:30,-Wed21:30
+3,Kanata Decisive Krushers,C,-Mon18:30,-Wed18:30,-Tue21:30,-Mon21:30
+4,Longshots,C,-Tue18:30,-Wed20:00,-Wed18:30,-Tue21:30
 5,Prime Time,C
 6,AAA Kavtech,C
-7,Legends,C
+7,Legends,C,-Mon21:30,-Tue21:30,-Wed21:30
