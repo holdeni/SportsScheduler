@@ -4,7 +4,10 @@ namespace App\Controller;
 
 use App\Service\ReportService;
 use App\Service\ScheduledGameService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -108,6 +111,83 @@ class DefaultController extends Controller
                 'title' => "Softball Scheduler",
                 'module' => 'report_nights_and_times',
                 'report' => $reportData,
+            )
+        );
+    }
+
+    /**
+     * Display schedule with ability to select specific teams or division
+     *
+     * @Route(
+     *     "/selectable_schedule",
+     *     name="selectable_schedule"
+     * )
+     *
+     * @param ScheduledGameService $scheduledGameService
+     * @param ReportService $reportService
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function selectableScheduleAction(
+        ScheduledGameService $scheduledGameService,
+        ReportService $reportService
+    ) {
+        $teamData = $reportService->fetchListOfTeams();
+        $divisionData = $reportService->fetchListOfDivisions();
+
+        $scheduledGamesData = $scheduledGameService->dumpSchedule();
+
+        return $this->render(
+            'base.html.twig',
+            array(
+                'title' => "Softball Scheduler",
+                'module' => "selectable_schedule",
+                'schedule' => $scheduledGamesData,
+                'teams' => $teamData,
+                'divisions' => $divisionData,
+            )
+        );
+    }
+
+    /**
+     * @Route(
+     *     "/filter",
+     *     name="filter_schedule"
+     * )
+     *
+     * @Method(
+     *     {"POST"}
+     * )
+     *
+     * @param Request $request
+     * @param ScheduledGameService $scheduledGameService
+     * @param ReportService $reportService
+     *
+     * @return Response
+     */
+    public function filterScheduleAction(
+        Request $request,
+        ScheduledGameService $scheduledGameService,
+        ReportService $reportService
+    ) {
+        $teamData = $reportService->fetchListOfTeams();
+        $divisionData = $reportService->fetchListOfDivisions();
+
+        $filtersChosen = $request->request->all();
+        $teamsFilter = array();
+        foreach ($filtersChosen as $selector) {
+            $teamsFilter = array_merge($selector, $teamsFilter);
+        }
+        $scheduledGameData = $scheduledGameService->dumpFilteredSchedule($teamsFilter);
+
+        return $this->render(
+            'base.html.twig',
+            array(
+                'title' => "Softball Scheduler",
+                'module' => "selectable_schedule",
+                'schedule' => $scheduledGameData,
+                'teams' => $teamData,
+                'divisions' => $divisionData,
             )
         );
     }

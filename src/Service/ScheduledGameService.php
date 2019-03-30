@@ -83,7 +83,7 @@ class ScheduledGameService
     public function formatAsArray(ScheduledGame $game)
     {
         $gameData = array(
-            'Game Id' => $game->getScheduledGameId(),
+            'Game_Id' => $game->getScheduledGameId(),
             'Date' => $game->getGameDate()->format("Y-m-d"),
             'Time' => $game->getGameTime()->format("H:i"),
             'Location' => $game->getGameLocation(),
@@ -103,6 +103,29 @@ class ScheduledGameService
         $scheduledGamesDump = array();
 
         $scheduledGames = $this->scheduledGameRepo->listAllScheduledGames();
+        foreach ($scheduledGames as $game) {
+            $this->mapScheduledGame($game);
+            $month = $game->getGameDate()->format("M");
+            $dayInMonth = $game->getGameDate()->format("j");
+            $scheduledGamesDump[$month][$dayInMonth][] = $this->formatAsArray($game);
+        }
+
+        return $scheduledGamesDump;
+    }
+
+    /**
+     * Fetch scheduled game details for list of filtered teams
+     *
+     * @param int[] $teamIdFilters
+     *
+     * @return array
+     */
+    public function dumpFilteredSchedule(array $teamIdFilters)
+    {
+        $this->logger->debug("FILTERS:\n" . print_r($teamIdFilters, true));
+        $scheduledGamesDump = array();
+
+        $scheduledGames = $this->scheduledGameRepo->listScheduledGamesForFilteredTeams($teamIdFilters);
         foreach ($scheduledGames as $game) {
             $this->mapScheduledGame($game);
             $month = $game->getGameDate()->format("M");

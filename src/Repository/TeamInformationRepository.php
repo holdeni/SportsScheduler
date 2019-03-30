@@ -186,4 +186,23 @@ class TeamInformationRepository extends ServiceEntityRepository
 
         return $preferences;
     }
+
+    /**
+     * Fetch all the information about teams in the league
+     *
+     * @return TeamInformation[]
+     */
+    public function fetchListOfTeams()
+    {
+        $sql = "SELECT ti
+                FROM App:TeamInformation ti
+                ORDER BY ti.teamName ASC
+               ";
+
+        $teamInfo = $this->getEntityManager()
+            ->createQuery($sql)
+            ->getResult(Query::HYDRATE_OBJECT);
+
+        return $teamInfo;
+    }
 }

@@ -228,4 +228,33 @@ class ScheduledGameRepository extends ServiceEntityRepository
 
         return $dowBreakdown;
     }
+
+    /**
+     * Fetch list of scheduled games involving teams included in provided list
+     *
+     * @param array $teamIdFilter
+     *
+     * @return ScheduledGame[]|array
+     */
+    public function listScheduledGamesForFilteredTeams(array $teamIdFilter)
+    {
+        if (empty($teamIdFilter)) {
+            return array();
+        }
+
+        $teamIdList = implode(',', $teamIdFilter);
+        $where = " WHERE sg.homeTeamId IN (" . $teamIdList . ") OR sg.visitTeamId IN (" . $teamIdList . ") ";
+        $where .= " OR sg.division IS NULL ";
+
+        $sql = "SELECT sg
+                FROM App:ScheduledGame sg";
+        $sql .=  $where;
+        $sql .= " ORDER BY sg.gameDate, sg.gameTime, sg.gameLocation";
+
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->getResult(Query::HYDRATE_OBJECT);
+
+        return $dbData;
+    }
 }

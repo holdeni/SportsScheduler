@@ -11,6 +11,7 @@ namespace App\Service;
 use App\Entity\ScheduledGame;
 use App\Repository\ScheduledGameRepository;
 use App\Repository\TeamInformationRepository;
+use Psr\Log\LoggerInterface;
 
 
 /**
@@ -24,6 +25,9 @@ class ReportService
 
     /** @var TeamInformationRepository */
     private $teamInformationRepo;
+
+    /** @var LoggerInterface */
+    private $logger;
 
     /** @var array */
     private $daysOfWeek = array(
@@ -42,13 +46,16 @@ class ReportService
      *
      * @param ScheduledGameRepository $scheduledGameRepository
      * @param TeamInformationRepository $teamInformationRepository
+     * @param LoggerInterface $logger
      */
     public function __construct(
         ScheduledGameRepository $scheduledGameRepository,
-        TeamInformationRepository $teamInformationRepository
+        TeamInformationRepository $teamInformationRepository,
+        LoggerInterface $logger
     ) {
         $this->scheduledGameRepo = $scheduledGameRepository;
         $this->teamInformationRepo = $teamInformationRepository;
+        $this->logger = $logger;
     }
 
     /**
@@ -103,10 +110,10 @@ class ReportService
             ),
             'daysOfWeek' => array(
 //                'Sun',
-                'Mon',
+//                'Mon',
                 'Tue',
                 'Wed',
-//                'Thu',
+                'Thu',
 //                'Fri',
 //                'Sat',
 //                'Sun',
@@ -144,17 +151,29 @@ class ReportService
         foreach ($teamGames as $game) {
             $dayOfWeek = $game->getGameDate()->format('D');
             $gameTime = $game->getGameTime()->format("H:i");
+            // KMLL timeslots
+//            switch ($gameTime) {
+//                case '18:30':
+//                    $timeslot = 'slot1';
+//                    break;
+//
+//                case '20:00':
+//                    $timeslot = 'slot2';
+//                    break;
+//
+//                case '21:30':
+//                    $timeslot = 'slot3';
+//                    break;
+//
+//                default:
+//                    // @todo This should throw an exception
+//                    $timeslot = '';
+//                    break;
+//            }
+            // OTSL timeslots
             switch ($gameTime) {
-                case '18:30':
+                case '16:45':
                     $timeslot = 'slot1';
-                    break;
-
-                case '20:00':
-                    $timeslot = 'slot2';
-                    break;
-
-                case '21:30':
-                    $timeslot = 'slot3';
                     break;
 
                 default:
@@ -208,5 +227,34 @@ class ReportService
         $row['Totals']['Totals'] = 0;
 
         return $row;
+    }
+
+    /**
+     * @return array
+     */
+    public function fetchListOfTeams()
+    {
+        $teamData = array();
+        $dbData = $this->teamInformationRepo->fetchListOfTeams();
+        foreach ($dbData as $team)
+        {
+            $teamData[] = array(
+                'teamName' => $team->getTeamName(),
+                'division' => $team->getTeamDivision(),
+                'teamId' => $team->getTeamInformationId(),
+            );
+        }
+
+        return $teamData;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function fetchListOfDivisions()
+    {
+        $divisionData = $this->teamInformationRepo->getListOfTeamDivisions();
+
+        return $divisionData;
     }
 }

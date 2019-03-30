@@ -24,15 +24,15 @@ use Symfony\Component\HttpFoundation\Response;
 class ScheduleService
 {
     // Number of consecutive games allowed on same day of week
-    const MAX_CONSECUTIVE_SAME_DAY = 3;
+    const MAX_CONSECUTIVE_SAME_DAY = 5;
 
     // Number of consecutive games allowed at same time
-    const MAX_CONSECUTIVE_SAME_TIME = 3;
+    const MAX_CONSECUTIVE_SAME_TIME = 4;
 
     // Chance that a slot will not be removed from consideration
     // This is used for team preference slot removals to determine when a slot will be kept instead of removed
     // Meant to represent percentage chance of 100 that slot will not be deleted
-    const SLOT_PRESERVATION_LIMIT = 25;
+    const SLOT_PRESERVATION_LIMIT = 10;
 
     // Do not balance team dow scheduling until this specified week
     const SKIP_SCHEDULE_BALANCE_UNTIL_WEEK = 4;
@@ -505,12 +505,12 @@ class ScheduleService
             );
         }
 
-        if (count($slotsAvail) > 1) {
-            $slotsAvail = $this->reviewRecentTimes($game, $slotsAvail, $weekDatesInfo);
-            $this->collectGameSchedulingNotes(
-                "Number of available slots after consecutive time slot review: " . count($slotsAvail)
-            );
-        }
+//        if (count($slotsAvail) > 1) {
+//            $slotsAvail = $this->reviewRecentTimes($game, $slotsAvail, $weekDatesInfo);
+//            $this->collectGameSchedulingNotes(
+//                "Number of available slots after consecutive time slot review: " . count($slotsAvail)
+//            );
+//        }
 
         return $slotsAvail;
     }

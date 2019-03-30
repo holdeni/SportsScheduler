@@ -19,6 +19,8 @@
                     {% include 'reports/home_and_away.html.twig' %}
                 {% elseif module == 'report_nights_and_times' %}
                     {% include 'reports/nights_and_times.html.twig' %}
+                {% elseif module == 'selectable_schedule' %}
+                    {% include 'schedule/filteredSchedule.html.twig' %}
                 {% else %}
                     {% include 'about.html.twig' %}
                 {% endif %}

@@ -23,6 +23,12 @@
             <button class="btn btn-link {{ displayClass }}">
                 <a href="{{ path('report_nights_and_times') }}">Report - Nights &amp; Times</a>
             </button>
+
+            {% set displayClass = (module == 'selectable_schedule') ? "btn-outline-success" : "" %}
+            <button class="btn btn-link {{ displayClass }}">
+                <a href="{{ path('selectable_schedule') }}">Filtered Schedule</a>
+            </button>
+
         </div>
     </div>
     <div class="row">

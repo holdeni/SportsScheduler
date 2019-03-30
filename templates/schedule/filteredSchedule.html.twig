@@ -1,0 +1,34 @@
+<div>
+    <div class="row">
+        <h4>Filtered Schedule - Calendar</h4>
+    </div>
+
+    <form method="post">
+        <div class="form-row">
+            {% for division in divisions %}
+                <div class="form-group col-2">
+                    <label for="div_{{ division }}">Division {{ division }}</label>
+                    <select multiple id="div_{{ division }}" name="div_{{ division }}[]" class="form-control" size="6">
+                        {% for team in teams %}
+                            {% if team.division == division %}
+                                <option value="{{ team.teamId }}">{{ team.teamName }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endfor %}
+             <div class="col-1">
+                <input type="submit" value="Apply Filter" formaction="/filter"/>
+            </div>
+        </div>
+    </form>
+
+    {% for time, gamesInMonth in schedule %}
+        <div class="row">
+            {% include 'schedule/calendar_month.html.twig' %}
+        </div>
+        <div class="row">
+            <br />
+        </div>
+    {% endfor %}
+</div>
