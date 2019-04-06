@@ -24,10 +24,10 @@ use Symfony\Component\HttpFoundation\Response;
 class ScheduleService
 {
     // Number of consecutive games allowed on same day of week
-    const MAX_CONSECUTIVE_SAME_DAY = 5;
+    const MAX_CONSECUTIVE_SAME_DAY = 4;
 
     // Number of consecutive games allowed at same time
-    const MAX_CONSECUTIVE_SAME_TIME = 4;
+    const MAX_CONSECUTIVE_SAME_TIME = 3;
 
     // Chance that a slot will not be removed from consideration
     // This is used for team preference slot removals to determine when a slot will be kept instead of removed
@@ -43,16 +43,16 @@ class ScheduleService
 
     private $dowScheduleBalanceFactors = array(
         'Mon' => array(
-            'low' => 10,
+            'low' => 15,
             'high' => 30,
         ),
         'Tue' => array(
             'low' => 30,
-            'high' => 50,
+            'high' => 60,
         ),
         'Wed' => array(
             'low' => 30,
-            'high' => 50,
+            'high' => 60,
         ),
     );
 
@@ -505,12 +505,13 @@ class ScheduleService
             );
         }
 
-//        if (count($slotsAvail) > 1) {
-//            $slotsAvail = $this->reviewRecentTimes($game, $slotsAvail, $weekDatesInfo);
-//            $this->collectGameSchedulingNotes(
-//                "Number of available slots after consecutive time slot review: " . count($slotsAvail)
-//            );
-//        }
+        // For OTSL, this check should be commented out since all games are at the same time
+        if (count($slotsAvail) > 1) {
+            $slotsAvail = $this->reviewRecentTimes($game, $slotsAvail, $weekDatesInfo);
+            $this->collectGameSchedulingNotes(
+                "Number of available slots after consecutive time slot review: " . count($slotsAvail)
+            );
+        }
 
         return $slotsAvail;
     }

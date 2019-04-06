@@ -110,10 +110,10 @@ class ReportService
             ),
             'daysOfWeek' => array(
 //                'Sun',
-//                'Mon',
+                'Mon',
                 'Tue',
                 'Wed',
-                'Thu',
+//                'Thu',
 //                'Fri',
 //                'Sat',
 //                'Sun',
@@ -152,28 +152,17 @@ class ReportService
             $dayOfWeek = $game->getGameDate()->format('D');
             $gameTime = $game->getGameTime()->format("H:i");
             // KMLL timeslots
-//            switch ($gameTime) {
-//                case '18:30':
-//                    $timeslot = 'slot1';
-//                    break;
-//
-//                case '20:00':
-//                    $timeslot = 'slot2';
-//                    break;
-//
-//                case '21:30':
-//                    $timeslot = 'slot3';
-//                    break;
-//
-//                default:
-//                    // @todo This should throw an exception
-//                    $timeslot = '';
-//                    break;
-//            }
-            // OTSL timeslots
             switch ($gameTime) {
-                case '16:45':
+                case '18:30':
                     $timeslot = 'slot1';
+                    break;
+
+                case '20:00':
+                    $timeslot = 'slot2';
+                    break;
+
+                case '21:30':
+                    $timeslot = 'slot3';
                     break;
 
                 default:
@@ -181,6 +170,17 @@ class ReportService
                     $timeslot = '';
                     break;
             }
+            // OTSL timeslots
+//            switch ($gameTime) {
+//                case '16:45':
+//                    $timeslot = 'slot1';
+//                    break;
+//
+//                default:
+//                    // @todo This should throw an exception
+//                    $timeslot = '';
+//                    break;
+//            }
 
             $data[$dayOfWeek][$timeslot]++;
             $data['Totals'][$timeslot]++;
