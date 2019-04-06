@@ -13,6 +13,9 @@ use App\Repository\GameToScheduleRepository;
 use App\Repository\ScheduledGameRepository;
 use App\Repository\TeamInformationRepository;
 
+use DateInterval;
+use DateTime;
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpFoundation\Response;
@@ -80,7 +83,7 @@ class ScheduleService
     /** @var LoggerInterface */
     protected $logger;
 
-    /** @var null|\DateTime */
+    /** @var null|DateTime */
     protected $scheduleStartDate = null;
 
     /** @var null|int */
@@ -270,7 +273,7 @@ class ScheduleService
             $weekDatesInfo = $this->convertWeekNrToCalendarDates($weekNr);
             $this->logger->info("Start of current week [" . $weekNr ."]: " . $weekDatesInfo['start']->format("l, Y-m-d"));
 
-            $daysToShift = new \DateInterval("P1D");
+            $daysToShift = new DateInterval("P1D");
 
             for ($dow = 1; $dow <= 7; $dow++) {
                 // value runs 1 (Mon) thru 7 (Sun)
@@ -313,11 +316,11 @@ class ScheduleService
      * Create open slots in the schedule
      *
      * @param GameLocation[] $dbData
-     * @param \DateTime $dateToSchedule
+     * @param DateTime $dateToSchedule
      */
-    private function processTimeslotsForWeek(array $dbData, \DateTime $dateToSchedule): void
+    private function processTimeslotsForWeek(array $dbData, DateTime $dateToSchedule): void
     {
-        $gameInterval = new \DateInterval("PT" . $this->gameLengthInMins . "M");
+        $gameInterval = new DateInterval("PT" . $this->gameLengthInMins . "M");
 
         foreach ($dbData as $row) {
             $availableTime = $row->getEndAvailable()->diff($row->getStartAvailable());
@@ -331,7 +334,7 @@ class ScheduleService
             // Had to create a new object otherwise if I assigned the data from $row directly, I had a weird bug where
             // 2nd and subsequent weeks wouldn't work as the start time for the records in $dbData was always 23:00
             // so no intervals existed.
-            $timeToSchedule = new \DateTime($row->getStartAvailable()->format("H:i:s"));
+            $timeToSchedule = new DateTime($row->getStartAvailable()->format("H:i:s"));
             for ($slots = 1; $slots <= $availableSlots; $slots++) {
                 $scheduledGame = new ScheduledGame();
                 $scheduledGame
@@ -393,13 +396,13 @@ class ScheduleService
      * @param $divisionList
      *
      * @return string[]
-     * @throws \Exception if error occurs
+     * @throws Exception if error occurs
      */
     private function createRandomDivisionOrder($divisionList)
     {
         $rc = shuffle($divisionList);
         if (!$rc) {
-            throw new \Exception(
+            throw new Exception(
                 "Error in " . __METHOD__ . ": unable to create random order of divisions",
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
@@ -439,7 +442,7 @@ class ScheduleService
      *
      * @param string $division
      * @param int    $weekNr
-     * @param \DateTime[] $weekDatesInfo
+     * @param DateTime[] $weekDatesInfo
      */
     private function scheduleDivisionGamesInWeek(string $division, int $weekNr, array $weekDatesInfo)
     {
@@ -471,7 +474,7 @@ class ScheduleService
      *
      * @param GameToSchedule $game
      * @param ScheduledGame[] $slotsAvail
-     * @param \DateTime[] $weekDatesInfo
+     * @param DateTime[] $weekDatesInfo
      *
      * @return ScheduledGame[]
      */
@@ -551,19 +554,19 @@ class ScheduleService
      *
      * @param $weekNr
      *
-     * @return \DateTime[]
+     * @return DateTime[]
      */
     private function convertWeekNrToCalendarDates(int $weekNr): array
     {
         $weekDatesInfo['weekNr'] = $weekNr;
 
-        $weekDatesInfo['start'] = new \DateTime($this->scheduleStartDate);
-        $daysToShift = new \DateInterval("P1D");
+        $weekDatesInfo['start'] = new DateTime($this->scheduleStartDate);
+        $daysToShift = new DateInterval("P1D");
         $daysToShift->d = ($weekNr - 1) * 7;
         $weekDatesInfo['start']->add($daysToShift);
 
         $daysToShift->d = 6;
-        $weekDatesInfo['end'] = new \DateTime($weekDatesInfo['start']->format("Y-m-d"));
+        $weekDatesInfo['end'] = new DateTime($weekDatesInfo['start']->format("Y-m-d"));
         $weekDatesInfo['end']->add($daysToShift);
 
         return $weekDatesInfo;
@@ -621,7 +624,7 @@ class ScheduleService
      *
      * @param GameToSchedule $game
      * @param ScheduledGame[] $slotsAvail
-     * @param \DateTime[] $weekDatesInfo
+     * @param DateTime[] $weekDatesInfo
      *
      * @return ScheduledGame[]
      */
@@ -677,7 +680,7 @@ class ScheduleService
      *
      * @param GameToSchedule $game
      * @param ScheduledGame[] $slotsAvail
-     * @param \DateTime[] $weekDatesInfo
+     * @param DateTime[] $weekDatesInfo
      *
      * @return ScheduledGame[]
      */

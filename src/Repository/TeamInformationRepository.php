@@ -5,6 +5,8 @@ namespace App\Repository;
 use App\Entity\TeamInformation;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Query;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
@@ -27,8 +29,8 @@ class TeamInformationRepository extends ServiceEntityRepository
     /**
      * @param TeamInformation $entity
      *
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function save(TeamInformation $entity)
     {

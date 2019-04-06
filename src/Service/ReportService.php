@@ -138,6 +138,44 @@ class ReportService
     }
 
     /**
+     * Collect statistics on each teams games over consecutive use of the same timeslot, regardless of night
+     *
+     * @return array
+     */
+    public function consecutiveTimes()
+    {
+        $reportData = array(
+            'timeslots' => array(
+                'slot1' => array(
+                    'time' => '6:30p',
+                ),
+                'slot2' => array(
+                    'time' => '8:00p',
+                ),
+                'slot3' => array(
+                    'time' => '9:30p',
+                ),
+            ),
+            'data' => array(),
+        );
+
+        $divList = $this->teamInformationRepo->getListOfTeamDivisions();
+
+        foreach ($divList as $division) {
+            $teamList = $this->teamInformationRepo->getListOfTeamsInDivision($division);
+
+            foreach ($teamList as $team) {
+//                $this->logger->debug($team->getTeamName());
+                $teamGames = $this->scheduledGameRepo->listAllScheduledGames($team->getTeamInformationId());
+                $reportData['data'][$division][$team->getTeamName()] =
+                    $this->reviewTeamScheduleForConsecutiveTimes($teamGames);
+            }
+        }
+
+        return $reportData;
+    }
+
+    /**
      * Review a team schedule tracking which day of week and times games are scheduled upon
      *
      * @param ScheduledGame[] $teamGames
@@ -194,6 +232,72 @@ class ReportService
         }
 
         return $data;
+    }
+
+    /**
+     * @param array $teamGames
+     *
+     * @return array
+     */
+    private function reviewTeamScheduleForConsecutiveTimes(array $teamGames)
+    {
+        $gameIndex = 0;
+        $streakGameIds = array(
+            $teamGames[$gameIndex]->getScheduledGameId()
+        );
+        $curGame = 1;
+        $slots = array(
+            'slot1' => 0,
+            'slot2' => 0,
+            'slot3' => 0,
+        );
+
+        do {
+            do {
+                if ($teamGames[$gameIndex]->getGameTime()->format("H:i") ==
+                    $teamGames[$curGame]->getGameTime()->format("H:i")
+                ) {
+//                    $this->logger->debug("Consecutive check ongoing: " . $teamGames[$curGame]->getGameTime()->format("H:i"));
+                    $streakGameIds[] = $teamGames[$curGame]->getScheduledGameId();
+                    $curGame++;
+                    $consecutiveStreakActive = true;
+                } else {
+                    $consecutiveStreakActive = false;
+//                    $this->logger->debug("Consecutive streak resetting");
+                }
+            } while ($consecutiveStreakActive && isset($teamGames[$curGame]));
+
+            if ($consecutiveStreakActive) {
+                $lengthOfStreak = count($streakGameIds);
+                if ($lengthOfStreak >= 4) {
+                    $this->logger->debug("Streak longer than minimum threshold: " . $lengthOfStreak);
+                    $this->logger->debug(print_r($streakGameIds, true));
+                    switch ($teamGames[$gameIndex]->getGameTime()->format("H:i")) {
+                        case '18:30':
+                            $slots['slot1']++;
+                            break;
+
+                        case '20:00':
+                            $slots['slot2']++;
+                            break;
+
+                        case '21:30':
+                            $slots['slot3']++;
+                            break;
+                    }
+                }
+            }
+
+            if (isset($teamGames[$curGame])) {
+                $gameIndex = $curGame;
+                $streakGameIds = array(
+                    $teamGames[$gameIndex]->getScheduledGameId()
+                );
+                $curGame++;
+            }
+        } while (isset($teamGames[$curGame]));
+
+        return $slots;
     }
 
     /**

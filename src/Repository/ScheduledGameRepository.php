@@ -5,8 +5,12 @@ namespace App\Repository;
 use App\Entity\ScheduledGame;
 
 use App\Service\DateUtilityService;
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Query;
+use InvalidArgumentException;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -40,8 +44,8 @@ class ScheduledGameRepository extends ServiceEntityRepository
      *
      * @param ScheduledGame $entity
      *
-     * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function save(ScheduledGame $entity)
     {
@@ -68,12 +72,12 @@ class ScheduledGameRepository extends ServiceEntityRepository
     /**
      * Find records between given set of dates
      *
-     * @param \DateTime $startDate
-     * @param \DateTime @endDate
+     * @param DateTime $startDate
+     * @param DateTime $endDate
      *
      * @return ScheduledGame[]
      */
-    public function findAvailSlots(\DateTime $startDate, \DateTime $endDate)
+    public function findAvailSlots(DateTime $startDate, DateTime $endDate)
     {
         $sql = "SELECT sg
                 FROM App:ScheduledGame sg
@@ -172,7 +176,7 @@ class ScheduledGameRepository extends ServiceEntityRepository
         } elseif ($selector == "AWAY") {
             $fieldSelector = "sg.visitTeamId";
         } else {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Value of {selector} parameter must be HOME or AWAY: ' . print_r($selector, true),
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
@@ -256,5 +260,28 @@ class ScheduledGameRepository extends ServiceEntityRepository
             ->getResult(Query::HYDRATE_OBJECT);
 
         return $dbData;
+    }
+
+    /**
+     * Get database row data for single scheduled game
+     *
+     * @param int $id
+     *
+     * @return null|ScheduledGame
+     */
+    public function getScheduledGameDetails(int $id)
+    {
+        if (!is_numeric($id)) {
+            return null;
+        }
+
+        $sql = "SELECT sg
+                FROM App:ScheduledGame sg
+                WHERE sg.scheduledGameId = " . $id;
+        $dbData = $this->getEntityManager()
+            ->createQuery($sql)
+            ->getResult();
+
+        return $dbData[0];
     }
 }

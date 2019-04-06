@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        {% include 'common/header.html.twig' %}
-    </head>
+    {% include 'common/header.html.twig' %}
     <body>
         <div class="container">
             <div class="jumbotron">
@@ -19,6 +17,8 @@
                     {% include 'reports/home_and_away.html.twig' %}
                 {% elseif module == 'report_nights_and_times' %}
                     {% include 'reports/nights_and_times.html.twig' %}
+                {% elseif module == 'report_consecutive_times' %}
+                    {% include 'reports/consecutive_times.html.twig' %}
                 {% elseif module == 'selectable_schedule' %}
                     {% include 'schedule/filteredSchedule.html.twig' %}
                 {% else %}

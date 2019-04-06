@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Service\ScheduleService;
+use DateTime;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -20,7 +21,7 @@ class AppScheduleGenerateCommand extends Command
     /** @var SymfonyStyle */
     protected $io;
 
-    /** @var null|\DateTime */
+    /** @var null|DateTime */
     protected $scheduleStartDate = null;
 
     /** @var int */

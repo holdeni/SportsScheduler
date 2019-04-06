@@ -4,8 +4,7 @@ namespace App\Controller;
 
 use App\Service\ReportService;
 use App\Service\ScheduledGameService;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -14,17 +13,17 @@ use Symfony\Component\Routing\Annotation\Route;
  * Class DefaultController
  * @package App\Controller
  */
-class DefaultController extends Controller
+class DefaultController extends AbstractController
 {
     /**
      * Display default page
      *
      * @Route(
-     *     "/",
+     *     path="/",
      *     name="about"
      * )
      *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function indexAction()
     {
@@ -41,13 +40,13 @@ class DefaultController extends Controller
      * Display full league schedule in calendar format
      *
      * @Route(
-     *     "/schedule",
+     *     path="/schedule",
      *     name="calendar_schedule"
      * )
      *
      * @param ScheduledGameService $scheduledGameService
      *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function scheduleAction(ScheduledGameService $scheduledGameService)
     {
@@ -67,13 +66,13 @@ class DefaultController extends Controller
      * Display home and away report for teams over schedule
      *
      * @Route(
-     *     "/report_home_n_away",
+     *     path="/report_home_n_away",
      *     name="report_home_and_away"
      * )
      *
      * @param ReportService $reportService
      *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function reportHomeAndAwayAction(ReportService $reportService)
     {
@@ -93,13 +92,13 @@ class DefaultController extends Controller
      * Display nights and times for teams over schedule
      *
      * @Route(
-     *     "/report_nite_n_time",
+     *     path="/report_nite_n_time",
      *     name="report_nights_and_times"
      * )
      *
      * @param ReportService $reportService
      *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function reportNightsAndTimesAction(ReportService $reportService)
     {
@@ -116,17 +115,43 @@ class DefaultController extends Controller
     }
 
     /**
+     * Display consecutive time slot totals for teams
+     *
+     * @Route(
+     *     path="/report_consecutive_times",
+     *     name="report_consecutive_times"
+     * )
+     *
+     * @param ReportService $reportService
+     *
+     * @return Response
+     */
+    public function reportConsecutiveTimesAction(ReportService $reportService)
+    {
+        $reportData = $reportService->consecutiveTimes();
+
+        return $this->render(
+            'base.html.twig',
+            array(
+                'title' => "Softball Scheduler",
+                'module' => 'report_consecutive_times',
+                'report' => $reportData,
+            )
+        );
+    }
+
+    /**
      * Display schedule with ability to select specific teams or division
      *
      * @Route(
-     *     "/selectable_schedule",
+     *     path="/selectable_schedule",
      *     name="selectable_schedule"
      * )
      *
      * @param ScheduledGameService $scheduledGameService
      * @param ReportService $reportService
      *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function selectableScheduleAction(
         ScheduledGameService $scheduledGameService,
@@ -151,12 +176,9 @@ class DefaultController extends Controller
 
     /**
      * @Route(
-     *     "/filter",
-     *     name="filter_schedule"
-     * )
-     *
-     * @Method(
-     *     {"POST"}
+     *     path="/filter",
+     *     name="filter_schedule",
+     *     methods={"POST"}
      * )
      *
      * @param Request $request
@@ -190,5 +212,21 @@ class DefaultController extends Controller
                 'divisions' => $divisionData,
             )
         );
+    }
+
+    /**
+     * @Route(
+     *     path="/favicon.ico",
+     *     name="get_favicon",
+     *     methods={"GET"}
+     * )
+     *
+     * @return Response
+     */
+    public function getFaviconAction()
+    {
+        // @todo - We should return a Favorite icon image
+
+        return Response::create("");
     }
 }
