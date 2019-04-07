@@ -1,0 +1,47 @@
+<div>
+    <div class="row">
+        <h3>Consecutive Same Time Slot Usage Report</h3>
+    </div>
+    <div class="row">
+        &nbsp;
+    </div>
+
+    {% for division, teamData in report.data %}
+        <div class="row">
+            <h4>Division {{ division }}</h4>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-sm">
+                    <thead>
+                    <tr class="table-info">
+                        <th class="border-bottom-0 text-center align-middle">
+                            Team
+                        </th>
+                        {% for slot in report.timeslots %}
+                            <th class="border-bottom-0 text-center">{{ slot.time }}</th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for name, stats in teamData %}
+                        <tr>
+                            <td>
+                                {{ name }}
+                            </td>
+                            {% for slot in report.timeslots|keys %}
+                                <td class="border-0 text-center">{{ stats[slot] }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            &nbsp;
+        </div>
+    {% endfor %}
+</div>
