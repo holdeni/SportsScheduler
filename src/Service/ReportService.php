@@ -272,6 +272,7 @@ class ReportService
                 if ($lengthOfStreak >= 4) {
                     $this->logger->debug("Streak longer than minimum threshold: " . $lengthOfStreak);
                     $this->logger->debug(print_r($streakGameIds, true));
+                    $this->logger->debug("Streak time slot: " . $teamGames[$gameIndex]->getGameTime()->format("H:i"));
                     switch ($teamGames[$gameIndex]->getGameTime()->format("H:i")) {
                         case '18:30':
                             $slots['slot1']++;

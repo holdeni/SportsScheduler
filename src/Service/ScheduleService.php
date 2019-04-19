@@ -35,7 +35,7 @@ class ScheduleService
     // Chance that a slot will not be removed from consideration
     // This is used for team preference slot removals to determine when a slot will be kept instead of removed
     // Meant to represent percentage chance of 100 that slot will not be deleted
-    const SLOT_PRESERVATION_LIMIT = 10;
+    const SLOT_PRESERVATION_LIMIT = 0;
 
     // Do not balance team dow scheduling until this specified week
     const SKIP_SCHEDULE_BALANCE_UNTIL_WEEK = 4;
@@ -182,6 +182,9 @@ class ScheduleService
              */
              $this->createTimeSlots();
              $this->deleteSkippedTimeSlots();
+        } else {
+            // @todo We need to figure out the max weeks in the schedule when we didn't generate the whole schedule this run
+            $this->maxWeeksToSchedule = 16;
         }
 
         // Do the heavy lifting now - generate that dang schedule from all the pieces we have

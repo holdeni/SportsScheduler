@@ -32,7 +32,11 @@
                                 {{ name }}
                             </td>
                             {% for slot in report.timeslots|keys %}
-                                <td class="border-0 text-center">{{ stats[slot] }}</td>
+                                {% if stats[slot] == 0 %}
+                                    <td class="border-0 text-center">{{ stats[slot] }}</td>
+                                {% else %}
+                                    <td class="border-0 text-center"><strong>{{ stats[slot] }}</strong></td>
+                                {% endif %}
                             {% endfor %}
                         </tr>
                     {% endfor %}
